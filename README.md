@@ -33,8 +33,8 @@ AI outputs come in all shapes — raw text dumps, overused tables, bare JSON. yo
 **copyable** Markdown / plain text (local SVG when useful). The user gets something that
 "looks good and copies cleanly" instead of a raw dump.
 
-It is **not a chart tool**. Charts are a crowded space; yotta-chart differentiates on
-**presentation judgment + copyability + local + universal + CLI/MCP**.
+It handles **presentation only** — it picks the form and renders it; it never rewrites
+content or makes value judgments for the user.
 
 ## Core value
 
@@ -127,6 +127,10 @@ Exit codes: **0** = success; **1** = no input / read error; **2** = content vali
 
 ## MCP usage (present_result)
 
+The AI **auto-configures this MCP on first use** (writes the server entry into `mcpServers`
+and records the guardrail in permanent memory) — no manual setup needed; if MCP is not
+available it automatically falls back to the CLI with identical output.
+
 ```json
 {
   "mcpServers": {
@@ -180,7 +184,7 @@ After install, load the skill, follow the judgment layer in SKILL.md to pick a f
 - **Copyable-first**: Markdown + plain text dual output; SVG is an enhancement, never a blocker.
 - **Data stays local**: no network, no external rendering service.
 - **No content judgment**: presentation only — never rewrites content or makes value judgments for the user.
-- **Neutral open-source repo**: MIT-licensed, open capabilities; commercial information lives in separate channels, not in this repo.
+- **Open source**: MIT-licensed; see [NOTICE](NOTICE) for trademark and brand statements.
 
 ## License
 
