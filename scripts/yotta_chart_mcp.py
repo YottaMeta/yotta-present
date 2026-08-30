@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""yotta_chart_mcp.py — 元图（yotta-chart）MCP server。
+"""yotta_chart_mcp.py — 元图（yotta-chart）SVG 内核的 MCP 包装（内部实现）。
 
 stdio MCP server（JSON-RPC 2.0，换行分隔），把 yotta_chart.py 本地零依赖
 SVG 渲染内核暴露为 MCP 工具（12 种图表）。数据不出本机：只在本机拼 SVG
 并写文件，不联网、不调用外部渲染服务。
 
-运行：python scripts/yotta_chart_mcp.py
-MCP 客户端配置：
-  {"mcpServers":{"yotta-chart":{"command":"python",
-    "args":["<绝对路径>/scripts/yotta_chart_mcp.py"]}}}
+注意：本文件是内部实现，已被 yotta-present（yotta_present_mcp.py）统一
+呈现取代——图表形态走 present_result 的 chart_data 即可，无需单独配置
+本 server；对外文档不把它列为公开 MCP。仅供直接调试 / 高级用法。
 """
 
 import json

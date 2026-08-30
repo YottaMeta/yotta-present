@@ -25,7 +25,8 @@
     "!scripts/__pycache__",
     "!**/__pycache__",
     "!**/*.pyc",
-    "!scripts/test_*.py"
+    "!scripts/test_*.py",
+    "!scripts/yotta_chart_mcp.py"
   ],
   "repository": {
     "type": "git",

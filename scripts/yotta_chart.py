@@ -10,7 +10,8 @@ CLI：
     python scripts/yotta_chart.py <chart> [--title ...] [--labels a,b,c] \
         [--data 1,2,3] [--out out.svg] [--width 800] [--height 500] [--palette ...]
 
-MCP：由 yotta_chart_mcp.py 包装为 stdio MCP server（同一渲染内核）。
+MCP：图表形态经 yotta-present（scripts/yotta_present_mcp.py）的 present_result 暴露（chart_data），
+复用本渲染内核；独立 MCP 包装 yotta_chart_mcp.py 仅作仓库内部实现，不随包分发。
 """
 
 import base64
