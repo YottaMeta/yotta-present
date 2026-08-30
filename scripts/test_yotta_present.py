@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""test_yotta_present.py — 元图（yotta-chart）呈现核心自测套件。
+"""test_yotta_present.py — 元呈（yotta-present）呈现核心自测套件。
 
 覆盖：标准内容对象归一化 / 8 形态渲染（Markdown + 纯文本）/ 确定性判断兜底 /
 --form 显式指定 / 表格变体 / QA 解析 / 图表形态（本地 SVG + data URI）/
@@ -7,7 +7,7 @@ CLI（--file / --text / --both / --out / --json / --list-forms / 退出码）/
 MCP（initialize / tools.list / tools.call / 错误路径 / stdio 端到端）。
 
 运行：python scripts/test_yotta_present.py
-说明：本测试只在本地生成临时 SVG / 文件，不联网、不依赖外部库。
+说明：本测试只在本地生成临时 SVG / 文件，不联网、不依赖其它库。
 """
 import io
 import json
@@ -87,8 +87,8 @@ def run():
     check("纯文本解析头条", txt.get("headline") == "头条")
     check("纯文本解析要点", txt.get("bullets") == ["要点一", "要点二"])
     check("纯文本解析正文", len(txt.get("body", [])) == 2)
-    chk = yp.normalize_content("- [x] 完成\n- [ ] 待办")
-    check("复选框解析保留", chk["bullets"] == ["[x] 完成", "[ ] 待办"])
+    chk = yp.normalize_content("- [x] 完成\n- [ ] 事项")
+    check("复选框解析保留", chk["bullets"] == ["[x] 完成", "[ ] 事项"])
 
     print("== 确定性判断兜底 ==")
     def form_of(c):
@@ -148,8 +148,8 @@ def run():
     check("table text 管道分隔", "a | b" in tt["text"])
 
     print("== 形态渲染：checklist / metrics / qa ==")
-    cl = yp.present({"title": "清单", "bullets": ["[x] 完成", "[ ] 待办", "普通项"]})
-    check("checklist 复选框保留", "[x] 完成" in cl["markdown"] and "[ ] 待办" in cl["markdown"])
+    cl = yp.present({"title": "清单", "bullets": ["[x] 完成", "[ ] 事项", "普通项"]})
+    check("checklist 复选框保留", "[x] 完成" in cl["markdown"] and "[ ] 事项" in cl["markdown"])
     mt = yp.present({"title": "指标", "metrics": [{"label": "营收", "value": 100, "unit": "万", "tone": "up"},
                                                   {"label": "流失", "value": 2, "tone": "down"}]})
     check("metrics 箭头 up", "▲ 100 万" in mt["markdown"])

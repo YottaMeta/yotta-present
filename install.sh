@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# yotta-chart 多智能体安装脚本（YottaSkills 模板）
+# yotta-present 多智能体安装脚本（YottaSkills 模板）
 # 用法:
 #   bash install.sh --agent <name>  # 按智能体默认用户级目录安装
 #   bash install.sh --dir <path>    # 装到指定目录（用户改过目录的智能体）
@@ -8,7 +8,7 @@
 #   bash install.sh --list          # 列出智能体 -> 默认目录
 set -euo pipefail
 
-SKILL_NAME="yotta-chart"
+SKILL_NAME="yotta-present"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 case "$(uname -s)" in
   MINGW*|MSYS*)

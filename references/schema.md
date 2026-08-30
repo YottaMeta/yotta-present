@@ -1,8 +1,8 @@
-# 标准内容对象 schema（v1）——元图 yotta-chart 呈现核心
+# 标准内容对象 schema（v1）——元呈 yotta-present 呈现核心
 
 > 用途：给 `yotta_present` CLI / `present_result` MCP 工具的标准输入格式。
-> 智能体（经 SKILL.md 判断层）把「要呈现的内容」组装成标准内容对象，再交给元图渲染；
-> 也可直接喂 Markdown / 纯文本，由元图自动解析并兜底美化。
+> 智能体（经 SKILL.md 判断层）把「要呈现的内容」组装成标准内容对象，再交给元呈渲染；
+> 也可直接喂 Markdown / 纯文本，由元呈自动解析并兜底美化。
 
 ## 字段
 
@@ -38,12 +38,12 @@
 3. **键值对**：每行恰为 `{"header": …, "value": …}`，或二维数组 2 列。
 
 ```json
-{"rows": [{"header": "安装方式", "value": "npx -y @yottameta/yotta-chart"}]}
+{"rows": [{"header": "安装方式", "value": "npx -y @yottameta/yotta-present"}]}
 ```
 
 ## chart_data
 
-复用元图 12 图内核（bar / line / pie / radar / scatter / histogram / funnel /
+复用元呈 12 图内核（bar / line / pie / radar / scatter / histogram / funnel /
 waterfall / word_cloud / sankey / spreadsheet / treemap）。
 
 ```json
@@ -60,7 +60,7 @@ waterfall / word_cloud / sankey / spreadsheet / treemap）。
 |---|---|---|
 | 结论卡 | `conclusion` | 单个结论 / 评分 / 推荐 → 徽章 + 指标 + 要点 |
 | 表格交付 | `table` | 行列分明、需对比 / 罗列的数据 |
-| 清单卡 | `checklist` | 待办 / 要点 / 清单（支持 `[x]` / `[ ]`） |
+| 清单卡 | `checklist` | 事项 / 要点 / 清单（支持 `[x]` / `[ ]`） |
 | 正文 | `prose` | 叙述 / 说明 / 长段落 |
 | 指标板 | `metrics` | 一组关键指标 |
 | 问答卡 | `qa` | 问题 / 回答成对（rows 或 bullets 均可） |
@@ -106,7 +106,7 @@ waterfall / word_cloud / sankey / spreadsheet / treemap）。
   "headline": "本周三项推进顺利",
   "verdict": "整体进度正常",
   "metrics": [{"label": "任务", "value": 12}, {"label": "完成", "value": 9}],
-  "rows": [["项", "状态"], ["元图 S3", "进行中"], ["在线检测", "定案"]],
+  "rows": [["项", "状态"], ["元呈 S3", "进行中"], ["在线检测", "定案"]],
   "bullets": ["下周进入校验"]
 }
 ```

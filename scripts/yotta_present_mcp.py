@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""yotta_present_mcp.py — 元图（yotta-chart）呈现 MCP server。
+"""yotta_present_mcp.py — 元呈（yotta-present）呈现 MCP server。
 
 stdio MCP server（JSON-RPC 2.0，换行分隔），把 yotta_present.py 呈现核心
 暴露为 MCP 工具：
@@ -8,7 +8,7 @@ stdio MCP server（JSON-RPC 2.0，换行分隔），把 yotta_present.py 呈现�
                    （按需本地 SVG；--output md|text|both|json；--explain 附判断说明）
   present_forms   列出开源基线形态清单（只读）
 
-数据不出本机：只在本机拼字符串 / SVG，不联网、不调用外部渲染服务。
+数据不出本机：只在本机拼字符串 / SVG，不联网、不调用远程渲染服务。
 
 运行：python scripts/yotta_present_mcp.py
 MCP 客户端配置：
@@ -77,7 +77,7 @@ def mcp_tools():
         ),
         _tool_spec(
             "present_forms",
-            "列出元图开源基线 8 种呈现形态与说明（只读，无副作用）。",
+            "列出元呈开源基线 8 种呈现形态与说明（只读，无副作用）。",
             {},
         ),
     ]

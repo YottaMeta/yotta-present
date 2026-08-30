@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""test_yotta_chart.py — yotta-chart（元图）自测套件。
+"""test_yotta_chart.py — yotta-present（元呈）SVG 渲染内核自测套件。
 
 覆盖：12 种图表渲染（SVG 骨架 / data URI / 文件写入）/ 参数归一化 / XML 转义
-防注入 / 数值边界（空数据 / 全 0 / 负值）/ MCP initialize / tools.list /
-tools.call 12 工具 / 未知 method / 未知 tool / 错误入参 / stdio 端到端。
+防注入 / 数值边界（空数据 / 全 0 / 负值）。
 
 运行：python scripts/test_yotta_chart.py
-说明：本测试只在本地生成临时 SVG，不联网、不依赖外部库。
+说明：本测试只在本地生成临时 SVG，不联网、不依赖其它库。
 """
 import io
 import json
@@ -20,7 +19,6 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 import yotta_chart as yc  # noqa: E402
-import yotta_chart_mcp as m  # noqa: E402
 
 PASS = 0
 FAIL = 0
@@ -46,7 +44,7 @@ def run():
     check("nice ticks 有序", all(a < b for a, b in zip(yc._nice_ticks(0, 10), yc._nice_ticks(0, 10)[1:])))
 
     print("== 内核：12 种图表渲染 ==")
-    tmpdir = tempfile.mkdtemp(prefix="yotta-chart-test-")
+    tmpdir = tempfile.mkdtemp(prefix="yotta-present-test-")
     samples = {
         "bar": {"labels": ["A", "B", "C"], "data": [3, 5, 2]},
         "line": {"labels": ["A", "B", "C"], "data": [1, 4, 2]},
@@ -85,66 +83,6 @@ def run():
     check("未知图表抛错", _raises(lambda: yc.render("nope", {})))
     check("宽度钳制", yc.render("bar", {"data": [1], "width": 99999})["width"] <= 2400)
     check("XML 注入被转义", "<script>" not in yc.render("bar", {"data": [1], "title": "<script>alert(1)</script>"})["svg"])
-
-    print("== MCP：initialize / tools.list / tools.call ==")
-    init = m.handle_message({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-    check("initialize 返回 serverInfo", init["result"]["serverInfo"]["name"] == "yotta-chart")
-    tl = m.handle_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
-    names = [t["name"] for t in tl["result"]["tools"]]
-    check("tools.list 12 工具", len(names) == 12, str(names))
-    check("工具命名 generate_*_chart", all(n.startswith("generate_") and n.endswith("_chart") for n in names))
-    check("工具含 generate_pie_chart", "generate_pie_chart" in names)
-    check("工具含 generate_treemap_chart", "generate_treemap_chart" in names)
-
-    for c in yc.CHART_TYPES:
-        args = dict(samples.get(c, {"data": [1, 2, 3]}))
-        resp = m.handle_message({"jsonrpc": "2.0", "id": 10, "method": "tools/call",
-                                 "params": {"name": "generate_%s_chart" % c, "arguments": args}})
-        r = resp["result"]
-        check("tools.call %s 非 error" % c, r.get("isError") is False, json.dumps(r)[:200])
-        text = json.loads(r["content"][0]["text"])
-        check("tools.call %s 返回 path+data_uri" % c, text.get("path") and text["data_uri"].startswith("data:image/svg+xml;base64,"))
-        if text.get("temp_dir"):
-            shutil.rmtree(text["temp_dir"], ignore_errors=True)
-
-    print("== MCP：错误路径 ==")
-    no_data = m.handle_message({"jsonrpc": "2.0", "id": 20, "method": "tools/call",
-                                "params": {"name": "generate_bar_chart", "arguments": {}}})
-    check("缺 data 返回 isError", no_data["result"]["isError"] is True)
-    unknown_tool = m.handle_message({"jsonrpc": "2.0", "id": 21, "method": "tools/call",
-                                     "params": {"name": "generate_foo_chart", "arguments": {"data": [1]}}})
-    check("未知工具 isError", unknown_tool["result"]["isError"] is True)
-    unknown_method = m.handle_message({"jsonrpc": "2.0", "id": 22, "method": "bogus", "params": {}})
-    check("未知 method -32601", unknown_method["error"]["code"] == -32601)
-    bad_jsonrpc = m.handle_message({"foo": 1})
-    check("非 2.0 返回 -32600", bad_jsonrpc["error"]["code"] == -32600)
-    notify = m.handle_message({"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
-    check("通知不响应", notify is None)
-
-    print("== stdio 端到端 ==")
-    script = str(_HERE / "yotta_chart_mcp.py")
-    payloads = [
-        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
-        {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
-         "params": {"name": "generate_pie_chart", "arguments": {"labels": ["a", "b"], "data": [3, 1]}}},
-    ]
-    inp = "".join(json.dumps(p, ensure_ascii=False) + "\n" for p in payloads)
-    py = os.environ.get("YOTTA_TEST_PYTHON", sys.executable)
-    proc = subprocess.run([py, script], input=inp, capture_output=True, text=True, encoding="utf-8", timeout=60)
-    check("stdio 子进程退出码 0", proc.returncode == 0, proc.stderr[:200])
-    lines = [l for l in proc.stdout.splitlines() if l.strip()]
-    check("stdio 产出 3 行", len(lines) == 3, "got %d" % len(lines))
-    r1 = json.loads(lines[0])
-    check("stdio initialize id=1", r1.get("id") == 1 and r1["result"]["serverInfo"]["name"] == "yotta-chart")
-    r2 = json.loads(lines[1])
-    check("stdio tools/list 12", len(r2["result"]["tools"]) == 12)
-    r3 = json.loads(lines[2])
-    check("stdio tools/call pie 非 error", r3["result"]["isError"] is False)
-    t3 = json.loads(r3["result"]["content"][0]["text"])
-    check("stdio tools/call 返回文件", bool(t3.get("path")))
-    if t3.get("temp_dir"):
-        shutil.rmtree(t3["temp_dir"], ignore_errors=True)
 
     shutil.rmtree(tmpdir, ignore_errors=True)
 

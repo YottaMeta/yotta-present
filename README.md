@@ -1,10 +1,10 @@
 <p align="center"><b>Language</b>: English · <a href="./README.zh-CN.md">中文</a></p>
 
 <p align="center">
-  <img src="assets/banner.png" alt="yotta-chart banner" width="100%" />
+  <img src="assets/banner.png" alt="yotta-present banner" width="100%" />
 </p>
 
-<h1 align="center">yotta-chart · YuanTu (元图)</h1>
+<h1 align="center">yotta-present · YuanCheng (元呈)</h1>
 
 <p align="center">YottaMeta's <b>universal result-presentation layer</b>: take any AI output
 (conclusion / table / prose / chart / report), pick a <b>presentation form</b> via a
@@ -19,15 +19,15 @@ fully local and offline — no network, no external rendering service.</p>
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue" /></a>
   <a href="https://agentskills.io/"><img alt="Standard: agentskills.io" src="https://img.shields.io/badge/standard-agentskills.io-orange" /></a>
-  <a href="https://www.npmjs.com/package/@yottameta/yotta-chart"><img alt="npm package" src="https://img.shields.io/npm/v/@yottameta/yotta-chart" /></a>
-  <a href="https://github.com/YottaMeta/yotta-chart"><img alt="GitHub stars" src="https://img.shields.io/github/stars/YottaMeta/yotta-chart" /></a>
-  <a href="https://github.com/YottaMeta/yotta-chart/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/YottaMeta/yotta-chart" /></a>
-  <a href="https://github.com/YottaMeta/yotta-chart"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen" /></a>
+  <a href="https://www.npmjs.com/package/@yottameta/yotta-present"><img alt="npm package" src="https://img.shields.io/npm/v/@yottameta/yotta-present" /></a>
+  <a href="https://github.com/YottaMeta/yotta-present"><img alt="GitHub stars" src="https://img.shields.io/github/stars/YottaMeta/yotta-present" /></a>
+  <a href="https://github.com/YottaMeta/yotta-present/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/YottaMeta/yotta-present" /></a>
+  <a href="https://github.com/YottaMeta/yotta-present"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen" /></a>
 </p>
 
 ## What is this
 
-AI outputs come in all shapes — raw text dumps, overused tables, bare JSON. yotta-chart is a
+AI outputs come in all shapes — raw text dumps, overused tables, bare JSON. yotta-present is a
 "**presentation judgment + polish**" layer: it decides what **form** fits the content
 (card / table / prose / chart / report…), applies the YottaMeta design language, and outputs
 **copyable** Markdown / plain text (local SVG when useful). The user gets something that
@@ -154,15 +154,15 @@ Choose one of four (method 1 recommended):
 **Method 1: npx one-liner (npm registry)**
 
 ```bash
-npx -y @yottameta/yotta-chart --agent <agent-name>    # install to the agent's default user dir (recommended)
-npx -y @yottameta/yotta-chart --dir <path>           # install to a custom dir
-npx -y @yottameta/yotta-chart --list                 # list agent -> default dir
+npx -y @yottameta/yotta-present --agent <agent-name>    # install to the agent's default user dir (recommended)
+npx -y @yottameta/yotta-present --dir <path>           # install to a custom dir
+npx -y @yottameta/yotta-present --list                 # list agent -> default dir
 ```
 
 **Method 2: git clone**
 
 ```bash
-git clone https://github.com/YottaMeta/yotta-chart.git
+git clone https://github.com/YottaMeta/yotta-present.git
 ```
 
 **Method 3: Download ZIP**

@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * yotta-chart 跨平台安装器（YottaSkills）
+ * yotta-present 跨平台安装器（YottaSkills）
  * 用法:
- *   npx -y @yottameta/yotta-chart --agent <name>  # 按智能体默认用户级目录安装（推荐）
- *   npx -y @yottameta/yotta-chart --dir PATH      # 装到指定目录（用户改了目录的智能体）
- *   npx -y @yottameta/yotta-chart -g              # 安装到全部已知智能体用户级目录
- *   npx -y @yottameta/yotta-chart                 # 安装到检测到的项目级目录
- *   npx -y @yottameta/yotta-chart --list          # 列出智能体 -> 默认目录
+ *   npx -y @yottameta/yotta-present --agent <name>  # 按智能体默认用户级目录安装（推荐）
+ *   npx -y @yottameta/yotta-present --dir PATH      # 装到指定目录（用户改了目录的智能体）
+ *   npx -y @yottameta/yotta-present -g              # 安装到全部已知智能体用户级目录
+ *   npx -y @yottameta/yotta-present                 # 安装到检测到的项目级目录
+ *   npx -y @yottameta/yotta-present --list          # 列出智能体 -> 默认目录
  */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const SKILL_NAME = 'yotta-chart';
+const SKILL_NAME = 'yotta-present';
 const PKG_ROOT = path.join(__dirname, '..');
 
 // 智能体 -> 用户级默认技能目录（dirs 按优先级排列；--agent 装到第一个）

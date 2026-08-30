@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""yotta_present.py — 元图（yotta-chart）呈现核心 + CLI。
+"""yotta_present.py — 元呈（yotta-present）呈现核心 + CLI。
 
 把任意 AI 输出（JSON / Markdown / 纯文本）归一为「标准内容对象」，
 再按形态体系渲染成可复制的 Markdown / 纯文本（copyable-first），
@@ -29,7 +29,7 @@ CLI：
       [--title T] [--md|--text|--both|--json] [--out PATH] [--svg PATH]
       [--explain] [--list-forms] [--version]
 
-数据不出本机：只在本机拼字符串 / SVG，不联网、不调用外部渲染服务。
+数据不出本机：只在本机拼字符串 / SVG，不联网、不调用远程渲染服务。
 """
 
 import argparse
@@ -51,14 +51,14 @@ import yotta_chart as yc  # noqa: E402  （图表形态复用 12 图内核）
 
 VERSION = "0.1.0"
 TOOL_NAME = "yotta-present"
-CN_NAME = "元图·呈现"
+CN_NAME = "元呈·呈现"
 
 FORMS = ["conclusion", "table", "checklist", "prose", "metrics", "qa", "report", "chart"]
 
 FORM_DESC = {
     "conclusion": "结论卡：单个结论 / 评分 / 推荐 → 徽章 + 指标 + 要点",
     "table": "表格交付：行列分明、需对比 / 罗列的数据",
-    "checklist": "清单卡：待办 / 要点 / 清单",
+    "checklist": "清单卡：事项 / 要点 / 清单",
     "prose": "正文：叙述 / 说明 / 长段落",
     "metrics": "指标板：一组关键指标",
     "qa": "问答卡：问题 / 回答成对",
@@ -937,7 +937,7 @@ def _read_utf8(path):
 def _build_parser():
     p = argparse.ArgumentParser(
         prog="yotta_present",
-        description="元图 yotta-chart 呈现核心：任意内容 → 可复制 Markdown / 纯文本（按需附本地 SVG）")
+        description="元呈 yotta-present 呈现核心：任意内容 → 可复制 Markdown / 纯文本（按需附本地 SVG）")
     p.add_argument("--file", metavar="PATH", help="从文件读取内容（UTF-8）")
     p.add_argument("--content", metavar="TEXT", help="直接传入内容（JSON 或文本）")
     p.add_argument("--form", choices=FORMS, help="显式指定形态（缺省自动判断）")
@@ -1002,10 +1002,10 @@ def cli(argv=None):
     args = parser.parse_args(argv)
 
     if args.version:
-        print("元图 yotta-chart %s（呈现核心，TOOL_NAME=%s）" % (VERSION, TOOL_NAME))
+        print("元呈 yotta-present %s（呈现核心，TOOL_NAME=%s）" % (VERSION, TOOL_NAME))
         return 0
     if args.list_forms:
-        print("元图 yotta-chart 呈现形态（开源基线 %d 种）：" % len(FORMS))
+        print("元呈 yotta-present 呈现形态（开源基线 %d 种）：" % len(FORMS))
         for f in FORMS:
             print("  %-12s %s" % (f, FORM_DESC[f]))
         return 0

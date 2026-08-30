@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""yotta_chart.py — 元图（yotta-chart）本地零依赖 SVG 渲染内核 + CLI。
+"""yotta_chart.py — 元呈（yotta-present）本地零依赖 SVG 渲染内核 + CLI。
 
 纯 Python 3.8+ 标准库生成 SVG 图表（bar/line/pie/radar/scatter/histogram/
 funnel/waterfall/word_cloud/sankey/spreadsheet/treemap，共 12 种）。
-数据不出本机：只在本机拼 SVG 字符串并写文件，不联网、不调用外部渲染服务。
+数据不出本机：只在本机拼 SVG 字符串并写文件，不联网、不调用远程渲染服务。
 
 CLI：
     python scripts/yotta_chart.py <chart> [--title ...] [--labels a,b,c] \
         [--data 1,2,3] [--out out.svg] [--width 800] [--height 500] [--palette ...]
 
 MCP：图表形态经 yotta-present（scripts/yotta_present_mcp.py）的 present_result 暴露（chart_data），
-复用本渲染内核；独立 MCP 包装 yotta_chart_mcp.py 仅作仓库内部实现，不随包分发。
+复用本渲染内核；图表形态经 yotta-present（scripts/yotta_present_mcp.py）的 present_result 暴露（chart_data），复用本渲染内核。
 """
 
 import base64
@@ -25,8 +25,8 @@ import time
 from xml.sax.saxutils import escape as _xml_escape
 
 VERSION = "0.1.0"
-TOOL_NAME = "yotta-chart"
-CN_NAME = "元图"
+TOOL_NAME = "yotta-present"
+CN_NAME = "元呈"
 
 # 支持图表清单（MCP tools / CLI 共用）
 CHART_TYPES = [
@@ -34,7 +34,7 @@ CHART_TYPES = [
     "funnel", "waterfall", "word_cloud", "sankey", "spreadsheet", "treemap",
 ]
 
-# 元阁自研调色板（不搬外部图表库视觉）
+# 元阁自研调色板（不搬其它图表库视觉）
 PALETTES = {
     "default": ["#2F6FED", "#22B8A6", "#F59F00", "#E64980", "#7048E8",
                 "#868E96", "#38D9A9", "#FAB005", "#4E9BFF", "#E8590C"],
@@ -997,7 +997,7 @@ def render(chart, params=None):
     if out:
         out = os.path.abspath(os.path.expanduser(str(out)))
         if os.path.isdir(out):
-            out = os.path.join(out, filename or "yotta-chart-%s.svg" % chart)
+            out = os.path.join(out, filename or "yotta-present-%s.svg" % chart)
         parent = os.path.dirname(out)
         if parent:
             os.makedirs(parent, exist_ok=True)
@@ -1033,7 +1033,7 @@ def cli(argv=None):
     """CLI 入口：python yotta_chart.py <chart> [options]。"""
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "help"):
-        print("元图 yotta-chart %s — 本地零依赖 SVG 可视化（Python 3.8+ stdlib）" % VERSION)
+        print("元呈 yotta-present %s — 本地零依赖 SVG 可视化（Python 3.8+ stdlib）" % VERSION)
         print("用法：python yotta_chart.py <chart> [--title T] [--labels a,b,c] [--data 1,2,3]")
         print("      [--out out.svg] [--width 800] [--height 500] [--palette default] [--json]")
         print("图表：%s" % ", ".join(CHART_TYPES))
