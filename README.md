@@ -125,10 +125,11 @@ python3 scripts/yotta_present.py --content '<same as above>' --out result.md --b
 
 Exit codes: **0** = success; **1** = no input / read error; **2** = content validation or render error.
 
-## MCP usage (present_result)
+## MCP usage (present_result / chart tools)
 
-The AI **auto-configures this MCP on first use** (writes the server entry into `mcpServers`
-and records the guardrail in permanent memory) — no manual setup needed; if MCP is not
+Two stdio MCP servers ship with the skill (zero dependency, data stays local). The AI
+**auto-configures them on first use** (writes the server entries into `mcpServers` and
+records the guardrail in permanent memory) — no manual setup needed; if MCP is not
 available it automatically falls back to the CLI with identical output.
 
 ```json
@@ -137,13 +138,17 @@ available it automatically falls back to the CLI with identical output.
     "yotta-present": {
       "command": "python",
       "args": ["<absolute path>/scripts/yotta_present_mcp.py"]
+    },
+    "yotta-chart": {
+      "command": "python",
+      "args": ["<absolute path>/scripts/yotta_chart_mcp.py"]
     }
   }
 }
 ```
 
-- `present_result`: `content` (JSON / Markdown / plain text) + optional `form` / `title` / `output`(md|text|both|json) / `svg` / `explain`.
-- `present_forms`: list the 8 open-source baseline forms (read-only).
+- `yotta-present`: `present_result` (`content` JSON / Markdown / plain text + optional `form` / `title` / `output`(md|text|both|json) / `svg` / `explain`); `present_forms` (list the 8 open-source baseline forms, read-only).
+- `yotta-chart`: 12 `generate_*_chart` tools (bar / line / pie / radar / scatter / histogram / funnel / waterfall / word_cloud / sankey / spreadsheet / treemap), local SVG file or data URI.
 
 ## Install
 

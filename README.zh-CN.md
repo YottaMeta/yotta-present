@@ -118,10 +118,10 @@ python3 scripts/yotta_present.py --content '<同上>' --out result.md --both
 
 退出码：**0** = 成功；**1** = 无输入 / 读取错误；**2** = 内容校验或渲染错误。
 
-## MCP 用法（present_result）
+## MCP 用法（present_result / 图表工具）
 
-AI **首次使用本技能时自动完成配置**（把 server 写入 `mcpServers` 并把护栏写入永久记忆），
-用户无需手动改；MCP 未加载时自动降级 CLI，输出一致。
+本技能自带两个 stdio MCP server（零依赖、数据不出本机）。AI **首次使用本技能时自动完成配置**
+（把 server 写入 `mcpServers` 并把护栏写入永久记忆），用户无需手动改；MCP 未加载时自动降级 CLI，输出一致。
 
 ```json
 {
@@ -129,13 +129,17 @@ AI **首次使用本技能时自动完成配置**（把 server 写入 `mcpServer
     "yotta-present": {
       "command": "python",
       "args": ["<绝对路径>/scripts/yotta_present_mcp.py"]
+    },
+    "yotta-chart": {
+      "command": "python",
+      "args": ["<绝对路径>/scripts/yotta_chart_mcp.py"]
     }
   }
 }
 ```
 
-- `present_result`：`content`（JSON / Markdown / 纯文本）+ 可选 `form` / `title` / `output`(md|text|both|json) / `svg` / `explain`。
-- `present_forms`：列出开源基线 8 种形态（只读）。
+- `yotta-present`：`present_result`（`content` JSON / Markdown / 纯文本 + 可选 `form` / `title` / `output`(md|text|both|json) / `svg` / `explain`）；`present_forms`（列出开源基线 8 种形态，只读）。
+- `yotta-chart`：12 个 `generate_*_chart` 工具（bar / line / pie / radar / scatter / histogram / funnel / waterfall / word_cloud / sankey / spreadsheet / treemap），本地生成 SVG 文件或 data URI。
 
 ## 安装
 
