@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write   # Required for OIDC trusted publishing
   contents: read
 
 jobs:
@@ -22,3 +21,5 @@ jobs:
           package-manager-cache: false
       - run: npm install
       - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
