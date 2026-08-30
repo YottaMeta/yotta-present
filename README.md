@@ -1,0 +1,187 @@
+<p align="center"><b>Language</b>: English · <a href="./README.zh-CN.md">中文</a></p>
+
+<p align="center">
+  <img src="assets/banner.png" alt="yotta-chart banner" width="100%" />
+</p>
+
+<h1 align="center">yotta-chart · YuanTu (元图)</h1>
+
+<p align="center">YottaMeta's <b>universal result-presentation layer</b>: take any AI output
+(conclusion / table / prose / chart / report), pick a <b>presentation form</b> via a
+content-type → form judgment layer, and render it as <b>copyable</b> Markdown / plain text
+(optional local SVG).</p>
+<p align="center">Trigger: when results need a consistent, copyable, polished presentation;
+when the user asks for cards / tables / reports / prettier output —
+<b>not a chart tool</b>; charts are only one of the presentation forms.</p>
+<p align="center">Zero external dependencies (Python 3.8+ standard library); Windows + Linux + macOS;
+fully local and offline — no network, no external rendering service.</p>
+
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue" /></a>
+  <a href="https://agentskills.io/"><img alt="Standard: agentskills.io" src="https://img.shields.io/badge/standard-agentskills.io-orange" /></a>
+  <a href="https://www.npmjs.com/package/@yottameta/yotta-chart"><img alt="npm package" src="https://img.shields.io/npm/v/@yottameta/yotta-chart" /></a>
+  <a href="https://github.com/YottaMeta/yotta-chart"><img alt="GitHub stars" src="https://img.shields.io/github/stars/YottaMeta/yotta-chart" /></a>
+  <a href="https://github.com/YottaMeta/yotta-chart/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/YottaMeta/yotta-chart" /></a>
+  <a href="https://github.com/YottaMeta/yotta-chart"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen" /></a>
+</p>
+
+## What is this
+
+AI outputs come in all shapes — raw text dumps, overused tables, bare JSON. yotta-chart is a
+"**presentation judgment + polish**" layer: it decides what **form** fits the content
+(card / table / prose / chart / report…), applies the YottaMeta design language, and outputs
+**copyable** Markdown / plain text (local SVG when useful). The user gets something that
+"looks good and copies cleanly" instead of a raw dump.
+
+It is **not a chart tool**. Charts are a crowded space; yotta-chart differentiates on
+**presentation judgment + copyability + local + universal + CLI/MCP**.
+
+## Core value
+
+- **Unified presentation** — whatever the input (JSON / Markdown / plain text), output follows one design language (title / badge / metrics / bullets / notes).
+- **Copyable-first** — Markdown (paste into any Markdown editor) + plain text (paste into Word / email).
+- **AI-driven choice** — agents pick the form via the judgment layer; without an agent, `yotta_present` falls back deterministically, plus `--form` for explicit choice.
+- **Local SVG** — for distributions / trends / shares, the built-in 12-chart kernel renders SVG locally; Markdown embeds a data URI (self-contained, copyable).
+- **Explainable** — `--explain` reports why a table / card was chosen.
+- **Zero-dependency offline** — Python 3.8+ stdlib; data never leaves the machine.
+
+## Why use it
+
+| Advantage | Description |
+|---|---|
+| **Universal** | Any AI output: conclusions, comparisons, checklists, tutorials, reports, charts |
+| **Copyable** | Markdown + plain text dual output; SVG is an enhancement, never a blocker |
+| **Local offline** | 0 matplotlib / canvas / remote rendering; data stays on the machine |
+| **Judgment layer** | Content-type → form rules live in SKILL.md (core depth); deterministic fallback works without an agent |
+| **Explainable** | The reason for each form choice is available |
+| **Ecosystem distribution** | GitHub + npm + ClawHub; npx / git clone / Download ZIP / install.sh |
+
+## Standard content object schema
+
+```json
+{
+  "title": "Security scan result",
+  "grade": "success",
+  "verdict": "No critical risk found",
+  "metrics": [{"label": "Checks", "value": 8, "unit": "items"}],
+  "bullets": ["All 8 checks passed"],
+  "notes": ["Scan ran locally only"]
+}
+```
+
+Fields: `title / headline / grade|verdict / metrics[] / rows[] / bullets[] / body[] / notes[] / chart_data? / form?`
+Full reference (rows forms, chart_data, judgment rules, examples): `references/schema.md`.
+
+## Forms (open-source baseline: 8)
+
+| Form | CLI name | When |
+|---|---|---|
+| Conclusion card | `conclusion` | One conclusion / score / recommendation → badge + metrics + bullets |
+| Table deliverable | `table` | Row/column data needing comparison or listing |
+| Checklist card | `checklist` | Todos / key points / checklists (`[x]` / `[ ]` kept) |
+| Prose | `prose` | Narrative / explanation / long paragraphs |
+| Metric board | `metrics` | A set of key metrics |
+| QA card | `qa` | Question / answer pairs |
+| Report | `report` | Multi-section content (cards + table + prose + TOC) |
+| Chart | `chart` | Distributions / trends / shares (local SVG, 12-chart kernel) |
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `--content <JSON\|text>` | Pass content directly (JSON object or Markdown / plain text) |
+| `--file <path>` | Read content from a UTF-8 file |
+| `--form <form>` | Force a form (auto-detected by default) |
+| `--md / --text / --both / --json` | Markdown (default) / plain text / both / full JSON |
+| `--out <path>` | Write to file (`--both` writes .md and .txt; a directory is named by form) |
+| `--svg <path>` | Chart form: local SVG output path |
+| `--explain` | Include the form-choice reason |
+| `--list-forms / --version` | List forms / show version |
+
+## Usage
+
+Windows: `python`; Linux/macOS: `python3`.
+
+```bash
+# Standard content object -> copyable Markdown (default)
+python3 scripts/yotta_present.py --content '{"title": "Conclusion", "grade": "success", "verdict": "Passed", "bullets": ["a", "b"]}'
+
+# Plain text input (auto-parsed + fallback polish)
+python3 scripts/yotta_present.py --file result.txt
+
+# Plain text output (paste into Word / email)
+python3 scripts/yotta_present.py --content '<same as above>' --text
+
+# Force a form + explanation
+python3 scripts/yotta_present.py --content '<same as above>' --form report --explain
+
+# Chart form: local SVG + Markdown reference
+python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "pie", "labels": ["A", "B"], "data": [3, 1]}}' --svg out/pie.svg
+
+# Full JSON (for programs) / write files
+python3 scripts/yotta_present.py --content '<same as above>' --json
+python3 scripts/yotta_present.py --content '<same as above>' --out result.md --both
+```
+
+Exit codes: **0** = success; **1** = no input / read error; **2** = content validation or render error.
+
+## MCP usage (present_result)
+
+```json
+{
+  "mcpServers": {
+    "yotta-present": {
+      "command": "python",
+      "args": ["<absolute path>/scripts/yotta_present_mcp.py"]
+    }
+  }
+}
+```
+
+- `present_result`: `content` (JSON / Markdown / plain text) + optional `form` / `title` / `output`(md|text|both|json) / `svg` / `explain`.
+- `present_forms`: list the 8 open-source baseline forms (read-only).
+
+## Install
+
+Choose one of four (method 1 recommended):
+
+**Method 1: npx one-liner (npm registry)**
+
+```bash
+npx -y @yottameta/yotta-chart --agent <agent-name>    # install to the agent's default user dir (recommended)
+npx -y @yottameta/yotta-chart --dir <path>           # install to a custom dir
+npx -y @yottameta/yotta-chart --list                 # list agent -> default dir
+```
+
+**Method 2: git clone**
+
+```bash
+git clone https://github.com/YottaMeta/yotta-chart.git
+```
+
+**Method 3: Download ZIP**
+
+GitHub repo page → `Code` → `Download ZIP`, unzip into the agent's skills directory.
+
+**Method 4: install.sh**
+
+```bash
+bash install.sh --agent <agent-name>    # install to the agent's default user dir
+bash install.sh --dir <path>            # install to a custom dir
+bash install.sh --list                  # list agent -> default dir
+```
+
+After install, load the skill, follow the judgment layer in SKILL.md to pick a form, and use
+`yotta_present` CLI or MCP `present_result` to emit copyable results.
+
+## Boundaries
+
+- **Not a chart tool**: charts are only one presentation form.
+- **Copyable-first**: Markdown + plain text dual output; SVG is an enhancement, never a blocker.
+- **Data stays local**: no network, no external rendering service.
+- **No content judgment**: presentation only — never rewrites content or makes value judgments for the user.
+- **Neutral open-source repo**: MIT-licensed, open capabilities; commercial information lives in separate channels, not in this repo.
+
+## License
+
+[MIT](LICENSE). Trademark and brand statements: see [NOTICE](NOTICE).
