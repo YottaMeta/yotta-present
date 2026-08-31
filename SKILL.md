@@ -1,6 +1,6 @@
 ---
 name: yotta-present
-version: 0.1.1
+version: 0.1.2
 description: 元呈 —— AI 输出的默认呈现层：智能体先把输出内容判为「内容类型」，再选「呈现形态」（结论卡/表格/正文/指标板/问答卡/报告/图表…），用 yotta_present CLI 或 present_result MCP 统一渲染成可复制的 Markdown / 纯文本（按需附本地 SVG）。触发：默认——凡交付给用户的 AI 输出都经元呈（判型 → 选形态 → 渲染）呈现；例外见正文白名单。边界：不做交互式图表编辑器 / BI / 数据分析工具；图表只是呈现形态之一；不做内容改写 / 判断本身。AI 首次使用自动接入 yotta-present MCP（写 mcpServers + 永久记忆护栏），输出默认统一呈现、未加载时降级 CLI。
 license: MIT
 metadata:
@@ -54,7 +54,7 @@ metadata:
 - 行列对比 / 罗列 → `table`
 - 事项 / 清单 → `checklist`（保留 `[x]` / `[ ]`）
 - 叙述 / 说明 / 长段落 → `prose`（规整为可复制文本）
-- 关键指标 → `metrics`；问答 → `qa`；多节长内容 → `report`；数值分布 / 趋势 / 占比 → `chart`
+- 关键指标 → `metrics`；问答 → `qa`（rows 须为 问题/回答 两列，否则判 `table`）；多节长内容 → `report`；数值分布 / 趋势 / 占比 → `chart`
 
 ## 核心机制（判断层 = 核心深度）
 
@@ -80,7 +80,7 @@ metadata:
 - 事项 / 要点 / 清单 → **清单卡**（`checklist`，支持 `[x]` / `[ ]`）
 - 叙述 / 说明 / 长段落 → **正文**（`prose`）
 - 一组关键指标 → **指标板**（`metrics`）
-- 问题 / 回答成对 → **问答卡**（`qa`）
+- 问题 / 回答成对 → **问答卡**（`qa`，rows 须为 问题/回答 两列）
 - 多节长内容（标题 + 表 + 指标 + 要点组合）→ **报告**（`report`，含目录）
 - 数值分布 / 趋势 / 占比，视觉更能传达时 → **图表**（`chart`，本地 SVG）
 - （开源基线外，后续扩展）对比矩阵 / 决策树 / 看板 / 甘特 / 日历 / 脑图 / 多栏报告 / 时间线 / 流程图
@@ -119,7 +119,7 @@ python3 scripts/yotta_present.py --content '<同上>' --text
 # 显式指定形态 + 附判断说明
 python3 scripts/yotta_present.py --content '<同上>' --form report --explain
 
-# 图表形态：本地 SVG + Markdown 相对路径引用
+# 图表形态：默认 Markdown 内嵌 data URI（自包含可复制）；--svg 时写本地 SVG + 路径引用
 python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "pie", "labels": ["A", "B"], "data": [3, 1]}}' --svg out/pie.svg
 
 # 完整 JSON 结果（程序消费）/ 写文件

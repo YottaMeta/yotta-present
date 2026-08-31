@@ -49,7 +49,7 @@ if _HERE not in sys.path:
 
 import yotta_chart as yc  # noqa: E402  （图表形态复用 12 图内核）
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 TOOL_NAME = "yotta-present"
 CN_NAME = "元呈·呈现"
 
@@ -321,9 +321,32 @@ def decide_form(content):
     return "prose", ["兜底：任何输出至少套『正文』美化，不让内容裸奔"]
 
 
+
+def _collect_warnings(content, form):
+    """收集常见错用提示（不阻断渲染，只提醒；CLI 打 stderr / MCP 附 warnings 字段）。"""
+    warnings = []
+    if "columns" in content:
+        warnings.append(
+            "table 不支持 columns 字段（已忽略）；列名请用 rows 对象列表的键，或二维数组 + headers。"
+        )
+    if form == "conclusion":
+        if not (content.get("grade") or content.get("verdict")):
+            warnings.append(
+                "conclusion 建议传 JSON：{title, grade, verdict, bullets}；当前输入（如 Markdown）无 grade / verdict，渲染无徽章 / 裁决结构。"
+            )
+    if form == "qa":
+        rows = content.get("rows")
+        if rows and not _looks_qa_rows(rows, content.get("headers")):
+            warnings.append(
+                "qa 的 rows 须为『问题 / 回答』两列（键命中 问题/question/q + 回答/answer/a），否则会判为 table。"
+            )
+    return warnings
+
+
 # ---------------------------------------------------------------------------
 # Markdown / 纯文本 渲染原语
 # ---------------------------------------------------------------------------
+
 
 def _esc_md_cell(v):
     """表格单元格转义：竖线转义、换行转 <br>。"""
@@ -917,6 +940,9 @@ def present(raw, form=None, title=None, svg_out=None, explain=False):
 
     if explain:
         result["explain"] = reasons
+    warnings = _collect_warnings(content, f)
+    if warnings:
+        result["warnings"] = warnings
     return result
 
 
@@ -1033,6 +1059,9 @@ def cli(argv=None):
         print("错误：--svg 仅在图表形态下有效（当前形态：%s，可加 --form chart）"
               % result["form"], file=sys.stderr)
         return 2
+
+    for w in result.get("warnings", []):
+        print("提示：%s" % w, file=sys.stderr)
 
     if args.out:
         try:

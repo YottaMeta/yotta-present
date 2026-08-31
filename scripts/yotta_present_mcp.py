@@ -93,7 +93,7 @@ def _tool_present(arguments):
     output = str(arguments.get("output") or "md").strip().lower()
     if output not in ("md", "text", "both", "json"):
         return _tool_error("output 只支持 md|text|both|json（当前：%s）" % output)
-    explain = bool(arguments.get("explain", False))
+    explain = bool(arguments.get("explain", True))
     try:
         r = yp.present(content, form=form, title=title, svg_out=svg, explain=explain)
     except Exception as e:  # noqa: BLE001
@@ -101,6 +101,8 @@ def _tool_present(arguments):
     payload = {"form": r["form"]}
     if explain:
         payload["explain"] = r.get("explain")
+    if r.get("warnings"):
+        payload["warnings"] = r["warnings"]
     if output in ("md", "both", "json"):
         payload["markdown"] = r["markdown"]
     if output in ("text", "both", "json"):

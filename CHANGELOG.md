@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.1.2 (2026-08-31)
+
+问题反馈修复（晓安 2026-08-31 反馈）：P2/P4 代码 + P3/P5/P1 文档。
+
+- P2 错用不报错：新增 warnings 机制——错误字段组合（table 的 columns / conclusion 无 grade·verdict / qa 非问题·回答两列）不阻断渲染，但 CLI 打 stderr「提示」、MCP 返回附 warnings 字段。
+- P4 判型反馈：MCP present_result 缺省即返回判型理由（explain），显式 explain=false 可关。
+- P3 输入速查：references/schema.md 顶部新增「形态 → 输入形式 → 必填字段」总表。
+- P5 qa 约束：SKILL.md「形态选择要点」与「形态选择规则」补「rows 须为 问题/回答 两列，否则判 table」。
+- P1 降级一致性澄清：SKILL.md / README 中英明确「无 --svg 时 CLI 与 MCP 均输出 data URI（自包含可复制）；显式 --svg 时 CLI 写本地 SVG 并以路径引用」。（反馈中 blob 引用现象在 0.1.1 代码层无法复现，无 image_blob_ref 逻辑，疑似客户端侧表示）
+- 测试：新增 warnings/explain 用例（6 条）。
+- 版本升至 0.1.2。
+
 ## v0.1.1 (2026-08-31)
 
 - SKILL.md 新增「使用须知（先做一步）」：技能按需触发（`always-load: false`，不常驻）；配置的 yotta-present MCP 常驻；AI 首次使用写入永久记忆护栏（已有则跳过）。

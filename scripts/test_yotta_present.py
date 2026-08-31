@@ -111,7 +111,21 @@ def run():
     check("form 显式指定", form_of({"form": "report", "bullets": ["a"]}) == "report")
     check("form 非法报错", _raises(lambda: yp.decide_form({"form": "nope"})))
 
-    print("== 形态渲染：conclusion ==")
+
+    print("== warnings / explain（问题反馈修复 P2/P4）==")
+    rw1 = yp.present({"columns": ["a", "b"], "rows": [[1, 2]]})
+    check("table columns 有 warning", any("columns" in w for w in rw1.get("warnings", [])), str(rw1.get("warnings")))
+    rw2 = yp.present("结论文字\n\n- 点1", form="conclusion")
+    check("conclusion Markdown 有 warning", any("grade / verdict" in w for w in rw2.get("warnings", [])), str(rw2.get("warnings")))
+    rw3 = yp.present({"title": "t", "grade": "success", "verdict": "通过", "bullets": ["b1"]}, form="conclusion")
+    check("正常 conclusion 无 warning", "warnings" not in rw3, str(rw3.get("warnings")))
+    rq = yp.present({"rows": [{"a": 1}]}, form="qa")
+    check("qa 非标准列有 warning", any("qa 的 rows" in w for w in rq.get("warnings", [])), str(rq.get("warnings")))
+    re1 = yp.present({"title": "t", "grade": "success", "verdict": "通过"}, explain=True)
+    check("explain 返回判型理由", isinstance(re1.get("explain"), list) and len(re1["explain"]) >= 1, str(re1.get("explain")))
+    re2 = yp.present({"title": "t", "verdict": "v"})
+    check("缺省 explain 不返回（CLI 语义保持）", "explain" not in re2, str(re2.get("explain")))
+
     c = {"title": "扫描结论", "grade": "success", "verdict": "未发现风险",
          "metrics": [{"label": "检测点", "value": 8, "unit": "项"}],
          "bullets": ["全部通过"], "notes": ["仅本机扫描"]}
@@ -192,7 +206,7 @@ def run():
     r0 = _run_cli(["--list-forms"])
     check("CLI --list-forms 退出 0", r0.returncode == 0 and "conclusion" in r0.stdout)
     rv = _run_cli(["--version"])
-    check("CLI --version 含版本", rv.returncode == 0 and "0.1.0" in rv.stdout)
+    check("CLI --version 含版本", rv.returncode == 0 and yp.VERSION in rv.stdout)
     rc1 = _run_cli(["--content", '{"title": "t", "bullets": ["a"]}'])
     check("CLI --content 默认 md", rc1.returncode == 0 and "# t" in rc1.stdout and "- a" in rc1.stdout)
     rc2 = _run_cli(["--content", '{"title": "t", "bullets": ["a"]}', "--text"])

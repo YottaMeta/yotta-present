@@ -21,6 +21,22 @@
 | `headers` | array | 否 | 表格显式表头（`rows` 为二维数组时可选） |
 | `form` | string | 否 | 显式形态（缺省自动判断）：`conclusion` / `table` / `checklist` / `prose` / `metrics` / `qa` / `report` / `chart` |
 
+
+## 形态 → 输入形式 → 必填字段（速查）
+
+| 形态 | 推荐输入 | 必填 / 关键字段 | 备注 |
+|---|---|---|---|
+| `conclusion` | JSON | `grade` / `verdict`（徽章与裁决结构） | 传 Markdown 会按 prose 兜底，无徽章 |
+| `table` | JSON | `rows`（对象列表 / 二维数组 / 键值对） | **无 `columns` 字段**；二维数组可用 `headers` |
+| `checklist` | Markdown `- [x]` / `- [ ]`，或 JSON | `bullets` | |
+| `prose` | Markdown 段落 / JSON | `body` / `text` | 兜底形态 |
+| `metrics` | JSON | `metrics`（≥1 项） | |
+| `qa` | JSON | `rows`（键须命中 问题/question/q + 回答/answer/a 两列） | 否则判 `table` |
+| `report` | JSON（多节组合）或 Markdown 多节 | `title` + 至少一段内容 | |
+| `chart` | JSON | `chart_data`（`chart`/`type` + 数据） | 无 `--svg` 时 Markdown 内嵌 data URI |
+
+> 规则：要精确控制形态，请显式传 `form` + 对应 JSON；不传 `form` 时按内容形状自动判断（可解释，`--explain` 返回原因）。错误字段组合不会报错，但会输出「提示」（CLI stderr / MCP `warnings` 字段）。
+
 ## rows 三种形式
 
 1. **对象列表（推荐）**：键并集即表头，列序按首现。

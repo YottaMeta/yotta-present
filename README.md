@@ -43,7 +43,7 @@ content or makes value judgments for the user.
 - **Unified presentation** — whatever the input (JSON / Markdown / plain text), output follows one design language (title / badge / metrics / bullets / notes).
 - **Copyable-first** — Markdown (paste into any Markdown editor) + plain text (paste into Word / email).
 - **AI-driven choice** — agents pick the form via the judgment layer; without an agent, `yotta_present` falls back deterministically, plus `--form` for explicit choice.
-- **Local SVG** — for distributions / trends / shares, the built-in 12-chart kernel renders SVG locally; Markdown embeds a data URI (self-contained, copyable).
+- **Local SVG** — for distributions / trends / shares, the built-in 12-chart kernel renders SVG locally; Markdown embeds a data URI (self-contained, copyable) by default; with `--svg` it writes a local SVG file and references the path.
 - **Explainable** — `--explain` reports why a table / card was chosen.
 - **Zero-dependency offline** — Python 3.8+ stdlib; data never leaves the machine.
 
