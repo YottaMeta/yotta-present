@@ -5,6 +5,7 @@ node_modules/
 # 临时
 .tmp/
 .tmp2/
+*.bak
 
 # 系统
 Thumbs.db

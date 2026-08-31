@@ -10,9 +10,11 @@
 (conclusion / table / prose / chart / report), pick a <b>presentation form</b> via a
 content-type → form judgment layer, and render it as <b>copyable</b> Markdown / plain text
 (optional local SVG).</p>
-<p align="center">Trigger: when results need a consistent, copyable, polished presentation;
-when the user asks for cards / tables / reports / prettier output —
-<b>not a chart tool</b>; charts are only one of the presentation forms.</p>
+<p align="center">Trigger: by default, any final result delivered to the user goes through
+yotta-present (judge → pick form → render) as copyable Markdown / plain text;
+explicit exceptions fall back raw — pure code / command output, error stacks / logs,
+long content via <code>--out</code>, or user’s one-liner / bare text.
+<b>Not a chart tool</b>; charts are only one of the presentation forms.</p>
 <p align="center">Zero external dependencies (Python 3.8+ standard library); Windows + Linux + macOS;
 fully local and offline — no network, no external rendering service.</p>
 

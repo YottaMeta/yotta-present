@@ -49,7 +49,7 @@ if _HERE not in sys.path:
 
 import yotta_chart as yc  # noqa: E402  （图表形态复用 12 图内核）
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 TOOL_NAME = "yotta-present"
 CN_NAME = "元呈·呈现"
 
