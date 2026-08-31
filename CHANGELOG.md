@@ -1,6 +1,21 @@
 # 更新日志
 
-## v0.1.2 (2026-08-31)
+## v0.2.0 (2026-09-01)
+
+格式规范扩展（《AI智能体回复格式设计规范》大嫂实战总结）+ 安全扫描修复（ClawHub SUSPICIOUS 项）。
+
+- 平台自适应层：新增 `--platform` / MCP `platform`，webchat（默认，完整 Markdown）/ discord / whatsapp（禁表格、禁大标题 → 表格转列表、标题转加粗）/ plain（命令行/纯文本：保留分点与逻辑顺序，去 Markdown 符号）。
+- 命名场景模板：新增 `--template` / MCP `template`，声明式 structure 骨架（vuln_report / faq / status），一次定义多处复用；模板定义存 `references/templates.json`（独立配置、可热更新，缺失回退内置）。
+- codeblock 块类型：模板支持 `codeblock`（content 的 `code` 字段，`lang` 语言围栏）。
+- bold_keys 自动加粗：content 或 MCP 参数 `bold_keys`，命中字段的值渲染为 `**加粗**`（plain 不加）。
+- max_len 长度熔断：content `max_len` 或 `--max-len N`，先压缩列表、再降标题层级、最后硬截断，保留 title/headline/verdict 结论。
+- MCP 新增 `present_templates` 只读工具（列出模板骨架）；`present_result` 缺省返回判型理由的说明与实现对齐（SDI-4）。
+- 安全修复（ClawHub 0.1.2 Security SUSPICIOUS 项）：TT2 测试 interpreter 白名单校验（`_resolve_test_python`，仅接受绝对路径 + basename python*，否则回退 sys.executable）；SKILL.md / README 补「明确同意门」与权限声明（写入 mcpServers/永久记忆前先征得用户同意，拒绝则降级 CLI，不影响功能）。
+- 测试：147/147（呈现）+ 72/72（SVG 内核）双版本全绿（原 118 + 新增 29：平台 6 / 模板 10 / codeblock+bold+max_len 5 / CLI 4 / MCP 2 / 安全 2）。
+
+> 注：v0.1.2（5c681de）实际已随 GitHub tag v0.1.2 三源发布（npm gitHead=5c681de / ClawHub 0.1.2），本版在其基础上扩展；v0.1.2 修复内容见下。
+
+ (2026-08-31)
 
 问题反馈修复（晓安 2026-08-31 反馈）：P2/P4 代码 + P3/P5/P1 文档。
 

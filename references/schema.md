@@ -20,6 +20,10 @@
 | `chart_data` | object | 否 | 图表数据（见下）；存在时形态自动判为 `chart` |
 | `headers` | array | 否 | 表格显式表头（`rows` 为二维数组时可选） |
 | `form` | string | 否 | 显式形态（缺省自动判断）：`conclusion` / `table` / `checklist` / `prose` / `metrics` / `qa` / `report` / `chart` |
+| `template` | string | 否 | 命名场景模板（优先于 `form`）：`vuln_report` / `faq` / `status`（定义见 `templates.json`） |
+| `code` | string | 否 | 代码块内容（模板 `codeblock` 块使用） |
+| `bold_keys` | array | 否 | 自动加粗的字段名数组（命中字段值渲染为 `**加粗**`；plain 不加） |
+| `max_len` | integer | 否 | 长度熔断上限（字符数）：先压缩列表、再降标题层级、最后截断，保留 title/headline/verdict |
 
 
 ## 形态 → 输入形式 → 必填字段（速查）
@@ -132,3 +136,29 @@ waterfall / word_cloud / sankey / spreadsheet / treemap）。
 ```json
 {"title": "趋势", "chart_data": {"chart": "pie", "labels": ["A", "B"], "data": [3, 1]}}
 ```
+
+## 平台自适应（platform）
+
+`--platform`（CLI）/ `platform`（MCP），默认 `webchat`。
+
+| platform | 行为 |
+|---|---|
+| `webchat` | 完整 Markdown（标题 / 表格 / 代码块全支持，默认） |
+| `discord` / `whatsapp` | 禁表格、禁大标题 → 表格自动转列表、标题转加粗；代码块保留 |
+| `plain` | 命令行 / 纯文本：保留分点与逻辑顺序，去 Markdown 符号（# / ** / > / 表格竖线） |
+
+## 命名场景模板（template）
+
+声明式 structure 骨架 + 平台策略，**一次定义多处复用**；定义存 `references/templates.json`（可热更新，缺失回退内置）。
+
+| 模板 key | 用途 | 结构 |
+|---|---|---|
+| `vuln_report` | 漏洞 / 安全报告 | 概述 → 等级与指纹（表格）→ 复现步骤（有序列表）→ 请求样本（codeblock）→ 危害分析（列表）→ 修复建议（有序列表） |
+| `faq` | 问答 | 结论先行 → 问答对 |
+| `status` | 状态一句话 | 纯文本（headline / verdict） |
+
+模板块类型：`heading` / `summary` / `table` / `list`（bulleted / ordered）/ `codeblock` / `qa` / `plain`；每块 `source` 指定内容字段，缺字段自动跳过（骨架自适应）。
+
+## 长度熔断（max_len）
+
+`max_len`（content）或 `--max-len N`（CLI）：渲染结果超限时依次「压缩列表 → 降标题层级 → 硬截断」，保留 `title` / `headline` / `verdict` 结论，不丢重点。

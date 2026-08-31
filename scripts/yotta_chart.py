@@ -24,7 +24,7 @@ import tempfile
 import time
 from xml.sax.saxutils import escape as _xml_escape
 
-VERSION = "0.1.2"
+VERSION = "0.2.0"
 TOOL_NAME = "yotta-present"
 CN_NAME = "元呈"
 

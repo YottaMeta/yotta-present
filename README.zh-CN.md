@@ -86,11 +86,14 @@ AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱�
 | `--content <JSON\|文本>` | 直接传入内容（JSON 标准对象或 Markdown / 纯文本） |
 | `--file <路径>` | 从文件读取内容（UTF-8） |
 | `--form <形态>` | 显式指定形态（缺省自动判断） |
+| `--template <key>` | 命名场景模板：`vuln_report` / `faq` / `status`（优先于 `--form`） |
+| `--platform <p>` | 平台自适应：`webchat`（默认）/ `discord` / `whatsapp`（表格转列表、标题转加粗）/ `plain`（去 Markdown 符号） |
+| `--max-len <n>` | 长度熔断（字符数）：先压缩列表 → 再降标题 → 最后截断，保留结论 |
 | `--md / --text / --both / --json` | 输出 Markdown（默认）/ 纯文本 / 两者 / 完整 JSON |
 | `--out <路径>` | 写文件（`--both` 时写 .md 与 .txt；目录按形态命名） |
 | `--svg <路径>` | 图表形态：本地 SVG 输出路径 |
 | `--explain` | 附判断说明（可解释性） |
-| `--list-forms / --version` | 形态清单 / 版本 |
+| `--list-forms / --list-templates / --version` | 形态清单 / 模板清单 / 版本 |
 
 ## 使用示例
 
@@ -115,6 +118,16 @@ python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "pie", "lab
 # 完整 JSON（程序消费）/ 写文件
 python3 scripts/yotta_present.py --content '<同上>' --json
 python3 scripts/yotta_present.py --content '<同上>' --out result.md --both
+
+# 平台自适应：Discord / WhatsApp（表格转列表、标题转加粗）/ 纯文本命令行
+python3 scripts/yotta_present.py --content '<同上>' --platform discord
+python3 scripts/yotta_present.py --content '<同上>' --platform plain
+
+# 命名场景模板（一次定义多处复用）：漏洞报告 / 问答 / 状态一句话
+python3 scripts/yotta_present.py --content '{"title": "SQL 注入", "grade": "danger", "verdict": "高危", "rows": [["注入点", "POST /demo.php"]], "steps": ["复现步骤"], "code": "POST /demo.php HTTP/1.1", "fixes": ["参数化查询"]}' --template vuln_report
+
+# 长度熔断（省 token）：先压缩列表、再降标题、最后截断，保留结论
+python3 scripts/yotta_present.py --content '<同上>' --max-len 800
 ```
 
 退出码：**0** = 成功；**1** = 无输入 / 读取错误；**2** = 内容校验或渲染错误。
@@ -124,7 +137,9 @@ python3 scripts/yotta_present.py --content '<同上>' --out result.md --both
 本技能只提供一个公开 MCP server：`yotta-present`（零依赖、数据不出本机）。纯图表**不需要**单独配置
 另一个 MCP server——`present_result` 的 `chart` 形态（`chart_data`）直接复用 12 图内核。
 AI **首次使用本技能时自动完成配置**（把 server 写入 `mcpServers` 并把护栏写入
-永久记忆），用户无需手动改；MCP 未加载时自动降级 CLI，输出一致。
+永久记忆），**每项持久变更前都会先征得你的明确同意**；你拒绝则不写入，自动降级 CLI，输出一致、功能不受影响。
+工具：`present_result`（支持 `form` / `template` / `platform` / `max_len` / `bold_keys` / `output` / `svg` / `explain`）、
+`present_forms`、`present_templates`。
 
 ```json
 {

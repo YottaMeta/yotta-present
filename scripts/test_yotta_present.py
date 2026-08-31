@@ -51,7 +51,7 @@ def _raises(fn):
 
 def _run_cli(args, inp=None):
     script = str(_HERE / "yotta_present.py")
-    py = os.environ.get("YOTTA_TEST_PYTHON", sys.executable)
+    py = yp._resolve_test_python()
     return subprocess.run([py, script] + args, input=inp, capture_output=True,
                           text=True, encoding="utf-8", timeout=60)
 
@@ -242,7 +242,7 @@ def run():
     check("initialize serverInfo", init["result"]["serverInfo"]["name"] == "yotta-present")
     tl = m.handle_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
     names = [t["name"] for t in tl["result"]["tools"]]
-    check("tools.list 2 工具", len(names) == 2, str(names))
+    check("tools.list 3 工具", len(names) == 3, str(names))
     check("含 present_result", "present_result" in names)
     check("含 present_forms", "present_forms" in names)
     resp = m.handle_message({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
@@ -300,7 +300,7 @@ def run():
                     "arguments": {"content": '{"title": "端到端", "bullets": ["a", "b"]}'}}},
     ]
     inp = "".join(json.dumps(p, ensure_ascii=False) + "\n" for p in payloads)
-    py = os.environ.get("YOTTA_TEST_PYTHON", sys.executable)
+    py = yp._resolve_test_python()
     proc = subprocess.run([py, script], input=inp, capture_output=True, text=True, encoding="utf-8", timeout=60)
     check("stdio 子进程退出码 0", proc.returncode == 0, proc.stderr[:200])
     lines = [l for l in proc.stdout.splitlines() if l.strip()]
@@ -308,7 +308,7 @@ def run():
     r1 = json.loads(lines[0])
     check("stdio initialize id=1", r1.get("id") == 1 and r1["result"]["serverInfo"]["name"] == "yotta-present")
     r2 = json.loads(lines[1])
-    check("stdio tools/list 2", len(r2["result"]["tools"]) == 2)
+    check("stdio tools/list 3", len(r2["result"]["tools"]) == 3)
     r3 = json.loads(lines[2])
     check("stdio tools/call 非 error", r3["result"]["isError"] is False)
     t3s = json.loads(r3["result"]["content"][0]["text"])
@@ -316,9 +316,89 @@ def run():
 
     shutil.rmtree(tmpdir, ignore_errors=True)
 
+def run_v020():
+    """v0.2.0 扩展：平台自适应 / 命名场景模板 / codeblock+bold_keys+max_len / 安全修复。"""
+    print("== v0.2.0 平台自适应（platform）==")
+    d1 = {"title": "对比", "rows": [{"方案": "A", "成本": "低"}, {"方案": "B", "成本": "高"}]}
+    r_web = yp.present(d1, platform="webchat")
+    check("webchat 保留表格", "| 方案 | 成本 |" in r_web["markdown"])
+    r_dis = yp.present(d1, platform="discord")
+    check("discord 表格转列表", "|" not in r_dis["markdown"] and "- A · 低" in r_dis["markdown"])
+    r_dis2 = yp.present({"title": "结论", "grade": "success", "verdict": "通过"}, platform="discord")
+    check("discord 标题转加粗", "# 结论" not in r_dis2["markdown"] and "**结论**" in r_dis2["markdown"])
+    r_wa = yp.present(d1, platform="whatsapp")
+    check("whatsapp 表格转列表", "|" not in r_wa["markdown"] and "- A · 低" in r_wa["markdown"])
+    r_pl = yp.present({"title": "结论", "grade": "success", "verdict": "通过", "bullets": ["a"]}, platform="plain")
+    check("plain 去 Markdown 符号", "#" not in r_pl["markdown"] and "**" not in r_pl["markdown"]
+          and ">" not in r_pl["markdown"] and "通过" in r_pl["markdown"])
+    r_pl2 = yp.present(d1, platform="plain")
+    check("plain 表格转列表", "|" not in r_pl2["markdown"] and "- 方案 · 成本" in r_pl2["markdown"])
+
+    print("== v0.2.0 命名场景模板（template）==")
+    vuln = {"title": "SQL 注入漏洞", "grade": "danger", "verdict": "存在高危注入",
+            "rows": [["注入点", "POST /demo.php"], ["类型", "时间盲注"]],
+            "steps": ["构造 payload", "观察延迟"], "code": "POST /demo.php HTTP/1.1\n\nselec=1 OR SLEEP(2)",
+            "impact": ["数据沦陷"], "fixes": ["参数化查询", "输入校验"]}
+    rv = yp.present(vuln, template="vuln_report")
+    check("模板 vuln_report 含标题", "# SQL 注入漏洞" in rv["markdown"])
+    check("模板 vuln_report 含概述", "存在高危注入" in rv["markdown"])
+    check("模板 vuln_report 含表格", "| 注入点 |" in rv["markdown"])
+    check("模板 vuln_report 含 codeblock", "```http" in rv["markdown"] and "SLEEP(2)" in rv["markdown"])
+    check("模板 vuln_report 含列表", "1. 构造 payload" in rv["markdown"] and "1. 参数化查询" in rv["markdown"])
+    rv_dis = yp.present(vuln, template="vuln_report", platform="discord")
+    check("模板 discord 降级表格", "|" not in rv_dis["markdown"] and "- 注入点 · POST /demo.php" in rv_dis["markdown"])
+    faq = {"title": "FAQ", "headline": "结论先行", "rows": [{"问题": "是什么", "回答": "呈现层"}]}
+    rf = yp.present(faq, template="faq")
+    check("模板 faq 含结论", "结论先行" in rf["markdown"])
+    check("模板 faq 含问答", "问：是什么" in rf["markdown"] and "答：呈现层" in rf["markdown"])
+    st = yp.present({"headline": "一切正常"}, template="status")
+    check("模板 status 纯文本", "一切正常" in st["markdown"])
+    check("模板缺 source 跳过", "NOPE" not in yp.present({"title": "t"}, template="vuln_report")["markdown"])
+    check("模板未知报错", _raises(lambda: yp.present({"title": "t"}, template="nope")))
+
+    print("== v0.2.0 codeblock / bold_keys / max_len ==")
+    cb = yp.present({"title": "t", "code": "print(1)"}, template="vuln_report")
+    check("codeblock lang 渲染", "```http\nprint(1)" in cb["markdown"])
+    bk = yp.present({"title": "扫描", "grade": "warn", "verdict": "高危", "level": "高危",
+                     "bold_keys": ["level", "verdict"]})
+    check("bold_keys 加粗 verdict", "**高危**" in bk["markdown"])
+    ml = yp.present({"title": "长文", "bullets": ["一", "二", "三", "四", "五"]}, max_len=15)
+    check("max_len 触发压缩", len(ml["markdown"]) <= 45 and "…" in ml["markdown"])
+    ml2 = yp.present({"title": "短", "bullets": ["a"]}, max_len=1000)
+    check("max_len 未超不截", len(ml2["markdown"]) <= 1000 and "…" not in ml2["markdown"])
+
+    print("== v0.2.0 CLI 新参数 ==")
+    rc = _run_cli(["--content", '{"title": "t", "rows": [["a", "b"]]}', "--platform", "discord"])
+    check("CLI --platform discord", rc.returncode == 0 and "|" not in rc.stdout and "- a · b" in rc.stdout)
+    rt = _run_cli(["--content", '{"title": "t", "verdict": "v"}', "--template", "status"])
+    check("CLI --template status", rt.returncode == 0 and "v" in rt.stdout)
+    rl = _run_cli(["--list-templates"])
+    check("CLI --list-templates", rl.returncode == 0 and "vuln_report" in rl.stdout and "faq" in rl.stdout)
+    rm = _run_cli(["--content", '{"bullets": ["a", "b", "c", "d"]}', "--max-len", "10"])
+    check("CLI --max-len", rm.returncode == 0 and "…" in rm.stdout)
+
+    print("== v0.2.0 MCP 新参数 ==")
+    resp = m.handle_message({"jsonrpc": "2.0", "id": 30, "method": "tools/call",
+                             "params": {"name": "present_result",
+                                        "arguments": {"content": '{"title": "t", "rows": [["a", "b"]]}',
+                                                      "platform": "discord"}}})
+    td = json.loads(resp["result"]["content"][0]["text"])
+    check("MCP present_result platform=discord", resp["result"]["isError"] is False and "|" not in td.get("markdown", ""))
+    resp2 = m.handle_message({"jsonrpc": "2.0", "id": 31, "method": "tools/call",
+                              "params": {"name": "present_templates", "arguments": {}}})
+    tt = json.loads(resp2["result"]["content"][0]["text"])
+    check("MCP present_templates 列出模板", resp2["result"]["isError"] is False
+          and "vuln_report" in str(tt) and "faq" in str(tt) and "status" in str(tt))
+
+    print("== v0.2.0 安全修复 ==")
+    check("TT2 interpreter 白名单", yp._resolve_test_python() is not None)
+    sdi4 = json.dumps(m.mcp_tools(), ensure_ascii=False)
+    check("SDI-4 explain 默认 true 声明", "默认 true" in sdi4 or "缺省返回判型理由" in sdi4)
+
 
 if __name__ == "__main__":
     run()
+    run_v020()
     print("\n结果：%d 通过 / %d 失败" % (PASS, FAIL))
     if FAILED:
         print("失败项：%s" % ", ".join(FAILED))

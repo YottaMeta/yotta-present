@@ -94,11 +94,14 @@ Full reference (rows forms, chart_data, judgment rules, examples): `references/s
 | `--content <JSON\|text>` | Pass content directly (JSON object or Markdown / plain text) |
 | `--file <path>` | Read content from a UTF-8 file |
 | `--form <form>` | Force a form (auto-detected by default) |
+| `--template <key>` | Named scenario template: `vuln_report` / `faq` / `status` (takes precedence over `--form`) |
+| `--platform <p>` | Platform adaptation: `webchat` (default) / `discord` / `whatsapp` (tables → lists, headings → bold) / `plain` (strip Markdown symbols) |
+| `--max-len <n>` | Length cap (chars): compress lists → downgrade headings → truncate, keeping the conclusion |
 | `--md / --text / --both / --json` | Markdown (default) / plain text / both / full JSON |
 | `--out <path>` | Write to file (`--both` writes .md and .txt; a directory is named by form) |
 | `--svg <path>` | Chart form: local SVG output path |
 | `--explain` | Include the form-choice reason |
-| `--list-forms / --version` | List forms / show version |
+| `--list-forms / --list-templates / --version` | List forms / list templates / show version |
 
 ## Usage
 
@@ -123,6 +126,16 @@ python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "pie", "lab
 # Full JSON (for programs) / write files
 python3 scripts/yotta_present.py --content '<same as above>' --json
 python3 scripts/yotta_present.py --content '<same as above>' --out result.md --both
+
+# Platform adaptation: Discord / WhatsApp (tables → lists, headings → bold) / plain terminal
+python3 scripts/yotta_present.py --content '<same as above>' --platform discord
+python3 scripts/yotta_present.py --content '<same as above>' --platform plain
+
+# Named scenario template (define once, reuse everywhere): vulnerability report / FAQ / status
+python3 scripts/yotta_present.py --content '{"title": "SQLi", "grade": "danger", "verdict": "High risk", "rows": [["Injection point", "POST /demo.php"]], "steps": ["Step 1"], "code": "POST /demo.php HTTP/1.1", "fixes": ["Parametrized query"]}' --template vuln_report
+
+# Length cap (token saving): compress lists, then headings, then truncate — conclusion kept
+python3 scripts/yotta_present.py --content '<same as above>' --max-len 800
 ```
 
 Exit codes: **0** = success; **1** = no input / read error; **2** = content validation or render error.
@@ -132,8 +145,11 @@ Exit codes: **0** = success; **1** = no input / read error; **2** = content vali
 The skill ships one public MCP server: `yotta-present` (zero dependency, data stays local).
 No separate chart MCP is needed — the `chart` form of `present_result` (`chart_data`) reuses
 the 12-chart kernel. The AI **auto-configures this MCP on first use** (writes the server entry
-into `mcpServers` and records the guardrail in permanent memory) — no manual setup needed; if
-MCP is not available it automatically falls back to the CLI with identical output.
+into `mcpServers` and records the guardrail in permanent memory) — **after obtaining your
+explicit consent** for each persistent change; if you decline, it falls back to the CLI
+with identical output and no functionality is lost. Tools: `present_result` (with
+`form` / `template` / `platform` / `max_len` / `bold_keys` / `output` / `svg` / `explain`),
+`present_forms`, `present_templates`.
 
 ```json
 {

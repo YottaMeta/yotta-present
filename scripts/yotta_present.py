@@ -49,9 +49,61 @@ if _HERE not in sys.path:
 
 import yotta_chart as yc  # noqa: E402  （图表形态复用 12 图内核）
 
-VERSION = "0.1.2"
+VERSION = "0.2.0"
 TOOL_NAME = "yotta-present"
 CN_NAME = "元呈·呈现"
+
+PLATFORMS = ["webchat", "discord", "whatsapp", "plain"]
+PLATFORM_DESC = {
+    "webchat": "Web/TUI：完整 Markdown（标题/表格/代码块全支持）",
+    "discord": "Discord：禁表格、禁大标题 → 表格转列表、标题转加粗",
+    "whatsapp": "WhatsApp：禁表格、禁大标题 → 表格转列表、标题转加粗",
+    "plain": "命令行/纯文本：保留分点与逻辑顺序，去 Markdown 符号",
+}
+TEMPLATES = {
+    "vuln_report": {
+        "title": "漏洞报告",
+        "structure": [
+            {"type": "heading", "level": 2, "text": "概述"},
+            {"type": "summary", "source": ["verdict", "headline"]},
+            {"type": "table", "source": "rows", "label": "等级与指纹"},
+            {"type": "list", "source": "steps", "style": "ordered", "label": "复现步骤"},
+            {"type": "codeblock", "source": "code", "lang": "http", "label": "请求样本"},
+            {"type": "list", "source": "impact", "style": "bulleted", "label": "危害分析"},
+            {"type": "list", "source": "fixes", "style": "ordered", "label": "修复建议"},
+        ],
+        "platform": {"webchat": "full", "discord": "downgrade", "whatsapp": "downgrade", "default": "full"},
+    },
+    "faq": {
+        "title": "问答",
+        "structure": [
+            {"type": "summary", "source": ["headline", "verdict"]},
+            {"type": "qa", "source": "rows", "label": "问答"},
+        ],
+        "platform": {"default": "full"},
+    },
+    "status": {
+        "title": "状态一句话",
+        "structure": [
+            {"type": "plain", "source": ["headline", "verdict"]},
+        ],
+        "platform": {"default": "plain"},
+    },
+}
+def _load_templates():
+    """从 references/templates.json 加载模板（可热更新）；缺失/损坏回退内置。"""
+    ref = os.path.join(_HERE, "..", "references", "templates.json")
+    try:
+        with open(ref, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data:
+            return data
+    except Exception:  # noqa: BLE001
+        pass
+    return dict(TEMPLATES)
+
+
+TEMPLATES = _load_templates()
 
 FORMS = ["conclusion", "table", "checklist", "prose", "metrics", "qa", "report", "chart"]
 
@@ -353,7 +405,60 @@ def _esc_md_cell(v):
     s = str(v)
     return s.replace("|", "\\|").replace("\r", " ").replace("\n", "<br>")
 
-def _md_table(headers, rows):
+
+def _h(level, text, platform="webchat"):
+    """标题渲染：webchat 完整 Markdown；discord/whatsapp 转加粗；plain 去符号。"""
+    if platform in ("discord", "whatsapp"):
+        return "**%s**" % text
+    if platform == "plain":
+        return text
+    return "%s %s" % ("#" * level, text)
+
+
+def _quote(text, platform="webchat"):
+    """引用块渲染：webchat 保留 >；discord/whatsapp 转加粗；plain 去符号。"""
+    if platform in ("discord", "whatsapp"):
+        return "**%s**" % text
+    if platform == "plain":
+        return text
+    return "> %s" % text
+
+
+def _bold(text, platform="webchat"):
+    """加粗渲染：plain 去符号，其余保留 **。"""
+    if platform == "plain":
+        return str(text)
+    return "**%s**" % text
+
+
+def _maybe_bold(key, value, content, platform="webchat"):
+    """bold_keys：命中字段的值自动加粗（plain 不加）。"""
+    if value is None:
+        return ""
+    if platform == "plain":
+        return str(value)
+    if key in (content.get("bold_keys") or []):
+        return "**%s**" % value
+    return str(value)
+
+
+def _md_table(headers, rows, platform="webchat"):
+    """表格渲染：webchat Markdown 表格；discord/whatsapp 降级为列表；plain 文本表格。"""
+    if platform in ("discord", "whatsapp"):
+        out = []
+        if headers:
+            out.append("- %s" % " · ".join(_esc_md_cell(h) for h in headers))
+        for row in rows:
+            cells = [_esc_md_cell(c) for c in row]
+            out.append("- %s" % " · ".join(cells))
+        return "\n".join(out)
+    if platform == "plain":
+        out = []
+        if headers:
+            out.append("- %s" % " · ".join(str(h) for h in headers))
+        for row in rows:
+            out.append("- %s" % " · ".join(str(c) for c in row))
+        return "\n".join(out)
     out = ["| %s |" % " | ".join(_esc_md_cell(h) for h in headers),
            "| %s |" % " | ".join(["---"] * len(headers))]
     for row in rows:
@@ -373,12 +478,14 @@ def _text_table(headers, rows):
     return "\n".join(lines)
 
 
-def _md_bullets(bullets):
+def _md_bullets(bullets, platform="webchat"):
     out = []
     for b in bullets:
         s = str(b)
         if re.match(r"^\s*[-*]\s", s) or re.match(r"^\s*\[[ xX]\]\s", s):
             out.append(s.strip())
+        elif platform == "plain":
+            out.append("• %s" % s)
         else:
             out.append("- %s" % s)
     return "\n".join(out)
@@ -392,7 +499,11 @@ def _md_body(body):
     return "\n\n".join(str(b) for b in body)
 
 
-def _md_notes(notes):
+def _md_notes(notes, platform="webchat"):
+    if platform in ("discord", "whatsapp"):
+        return "\n".join("**注：%s**" % n for n in notes)
+    if platform == "plain":
+        return "\n".join("注：%s" % n for n in notes)
     return "\n".join("> 注：%s" % n for n in notes)
 
 
@@ -432,38 +543,38 @@ def _metrics_rows(metrics):
 # 各形态渲染
 # ---------------------------------------------------------------------------
 
-def _render_conclusion_md(c):
+def _render_conclusion_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     badge = _grade_badge(c.get("grade"))
     verdict = c.get("verdict")
     headline = c.get("headline")
     parts = []
     if badge and badge[0]:
-        parts.append("%s **%s**" % badge)
+        parts.append("%s %s" % (badge[0], _bold(badge[1], platform)))
     elif badge and badge[1]:
-        parts.append("**%s**" % badge[1])
+        parts.append(_bold(badge[1], platform))
     if verdict:
-        parts.append(verdict)
+        parts.append(_maybe_bold("verdict", verdict, c, platform))
     if headline and headline != verdict:
-        parts.append(headline)
+        parts.append(_maybe_bold("headline", headline, c, platform))
     if parts:
-        sec.append("> %s" % " — ".join(parts))
+        sec.append(_quote(" — ".join(parts), platform))
     elif headline:
-        sec.append("> %s" % headline)
+        sec.append(_quote(headline, platform))
     if c.get("metrics"):
-        sec.append("**关键指标**")
-        sec.append(_md_table(["指标", "数值"], _metrics_rows(c["metrics"])))
+        sec.append(_bold("关键指标", platform))
+        sec.append(_md_table(["指标", "数值"], _metrics_rows(c["metrics"]), platform))
     if c.get("bullets"):
-        sec.append("**要点**")
-        sec.append(_md_bullets(c["bullets"]))
+        sec.append(_bold("要点", platform))
+        sec.append(_md_bullets(c["bullets"], platform))
     if c.get("body"):
-        sec.append("**说明**")
+        sec.append(_bold("说明", platform))
         sec.append(_md_body(c["body"]))
     if c.get("notes"):
         sec.append("---")
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -529,14 +640,14 @@ def _table_parts(c):
     return headers, data
 
 
-def _render_table_md(c):
+def _render_table_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     headers, data = _table_parts(c)
-    sec.append(_md_table(headers, data))
+    sec.append(_md_table(headers, data, platform))
     if c.get("notes"):
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -550,17 +661,18 @@ def _render_table_text(c):
         sec.append(_text_notes(c["notes"]))
     return "\n\n".join(sec)
 
-def _render_checklist_md(c):
+
+def _render_checklist_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     if c.get("headline"):
-        sec.append("> %s" % c["headline"])
+        sec.append(_quote(_maybe_bold("headline", c["headline"], c, platform), platform))
     if c.get("bullets"):
-        sec.append(_md_bullets(c["bullets"]))
+        sec.append(_md_bullets(c["bullets"], platform))
     if c.get("notes"):
         sec.append("---")
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -578,20 +690,20 @@ def _render_checklist_text(c):
     return "\n\n".join(sec)
 
 
-def _render_prose_md(c):
+def _render_prose_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     if c.get("headline"):
-        sec.append("> %s" % c["headline"])
+        sec.append(_quote(_maybe_bold("headline", c["headline"], c, platform), platform))
     if c.get("body"):
         sec.append(_md_body(c["body"]))
     if c.get("bullets"):
-        sec.append("**要点**")
-        sec.append(_md_bullets(c["bullets"]))
+        sec.append(_bold("要点", platform))
+        sec.append(_md_bullets(c["bullets"], platform))
     if c.get("notes"):
         sec.append("---")
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -612,17 +724,17 @@ def _render_prose_text(c):
     return "\n\n".join(sec)
 
 
-def _render_metrics_md(c):
+def _render_metrics_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
-    sec.append("**关键指标**")
-    sec.append(_md_table(["指标", "数值"], _metrics_rows(c["metrics"])))
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
+    sec.append(_bold("关键指标", platform))
+    sec.append(_md_table(["指标", "数值"], _metrics_rows(c["metrics"]), platform))
     if c.get("headline"):
-        sec.append("> %s" % c["headline"])
+        sec.append(_quote(_maybe_bold("headline", c["headline"], c, platform), platform))
     if c.get("notes"):
         sec.append("---")
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -706,16 +818,16 @@ def _pairs_from_bullets(bullets):
     return pairs
 
 
-def _render_qa_md(c):
+def _render_qa_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     for q, a in _parse_qa(c):
-        sec.append("**问：%s**" % q)
+        sec.append(_bold("问：%s" % q, platform))
         sec.append("答：%s" % a)
     if c.get("notes"):
         sec.append("---")
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -743,44 +855,44 @@ def _report_sections(c):
     ]
 
 
-def _render_report_md(c):
+def _render_report_md(c, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     if c.get("headline"):
-        sec.append("> %s" % c["headline"])
+        sec.append(_quote(_maybe_bold("headline", c["headline"], c, platform), platform))
     sections = [t for t, on in _report_sections(c) if on]
     if sections:
-        sec.append("**目录**")
+        sec.append(_bold("目录", platform))
         sec.append("\n".join("- %s" % t for t in sections))
     badge = _grade_badge(c.get("grade"))
     for t, on in _report_sections(c):
         if not on:
             continue
-        sec.append("## %s" % t)
+        sec.append(_h(2, t, platform))
         if t == "摘要":
             parts = []
             if badge and badge[0]:
-                parts.append("%s **%s**" % badge)
+                parts.append("%s %s" % (badge[0], _bold(badge[1], platform)))
             elif badge and badge[1]:
-                parts.append("**%s**" % badge[1])
+                parts.append(_bold(badge[1], platform))
             if c.get("verdict"):
-                parts.append(c["verdict"])
+                parts.append(_maybe_bold("verdict", c["verdict"], c, platform))
             if parts:
                 sec.append(" ".join(parts))
             if c.get("headline") and c.get("headline") != c.get("verdict"):
-                sec.append(c["headline"])
+                sec.append(_maybe_bold("headline", c["headline"], c, platform))
             if c.get("body"):
                 sec.append(_md_body(c["body"]))
         elif t == "关键指标":
-            sec.append(_md_table(["指标", "数值"], _metrics_rows(c["metrics"])))
+            sec.append(_md_table(["指标", "数值"], _metrics_rows(c["metrics"]), platform))
         elif t == "明细":
             headers, data = _table_parts(c)
-            sec.append(_md_table(headers, data))
+            sec.append(_md_table(headers, data, platform))
         elif t == "要点":
-            sec.append(_md_bullets(c["bullets"]))
+            sec.append(_md_bullets(c["bullets"], platform))
         elif t == "注记":
-            sec.append(_md_notes(c["notes"]))
+            sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -833,17 +945,20 @@ def _chart_ref(chart, prefer_path=False):
     return chart.get("data_uri") or ""
 
 
-def _render_chart_md(c, chart, prefer_path=False):
+def _render_chart_md(c, chart, prefer_path=False, platform="webchat"):
     sec = []
     if c.get("title"):
-        sec.append("# %s" % c["title"])
+        sec.append(_h(1, _maybe_bold("title", c["title"], c, platform), platform))
     ctitle = chart.get("title") or c.get("title") or chart.get("chart")
-    sec.append("![%s](%s)" % (ctitle, _chart_ref(chart, prefer_path)))
+    if platform == "plain":
+        sec.append("图表（%s）：data URI 内嵌于 Markdown 输出" % chart["chart"])
+    else:
+        sec.append("![%s](%s)" % (ctitle, _chart_ref(chart, prefer_path)))
     if c.get("headline"):
-        sec.append("> %s" % c["headline"])
+        sec.append(_quote(_maybe_bold("headline", c["headline"], c, platform), platform))
     if c.get("notes"):
         sec.append("---")
-        sec.append(_md_notes(c["notes"]))
+        sec.append(_md_notes(c["notes"], platform))
     return "\n\n".join(sec)
 
 
@@ -861,6 +976,194 @@ def _render_chart_text(c, chart):
         sec.append("")
         sec.append(_text_notes(c["notes"]))
     return "\n\n".join(sec)
+
+
+# ---------------------------------------------------------------------------
+# 命名场景模板（声明式 structure 骨架 + 平台策略）
+# ---------------------------------------------------------------------------
+
+def _tpl_source(content, source):
+    """取模板块的 source 数据：字段名（或字段名数组，取第一个非空）。"""
+    if isinstance(source, (list, tuple)):
+        for k in source:
+            if content.get(k):
+                return content.get(k)
+        return None
+    return content.get(source)
+
+
+def _render_template_md(key, content, platform="webchat"):
+    """按模板 structure 渲染 Markdown（缺 source 的块跳过）。"""
+    tpl = TEMPLATES.get(key)
+    if not tpl:
+        raise PresentError("未知模板：%s（可选：%s）" % (key, ", ".join(sorted(TEMPLATES))))
+    sec = []
+    if content.get("title"):
+        sec.append(_h(1, _maybe_bold("title", content["title"], content, platform), platform))
+    for block in tpl["structure"]:
+        btype = block.get("type")
+        src = block.get("source")
+        label = block.get("label") or ""
+        if btype == "heading":
+            sec.append(_h(block.get("level", 2), block.get("text") or block.get("label") or "", platform))
+        elif btype == "summary":
+            val = _tpl_source(content, src) or content.get("verdict") or content.get("headline")
+            if val:
+                parts = []
+                badge = _grade_badge(content.get("grade"))
+                if badge and badge[0]:
+                    parts.append("%s %s" % (badge[0], _bold(badge[1], platform)))
+                elif badge and badge[1]:
+                    parts.append(_bold(badge[1], platform))
+                parts.append(_maybe_bold(str(src[0] if isinstance(src, (list, tuple)) else src), val, content, platform))
+                sec.append(_quote(" — ".join(parts), platform))
+        elif btype == "table":
+            rows = content.get("rows")
+            if rows:
+                if label:
+                    sec.append(_bold(label, platform))
+                headers, data = _table_parts(content)
+                sec.append(_md_table(headers, data, platform))
+        elif btype == "list":
+            items = _tpl_source(content, src)
+            if items:
+                if label:
+                    sec.append(_bold(label, platform))
+                if block.get("style") == "ordered":
+                    sec.append("\n".join("%d. %s" % (i + 1, it) for i, it in enumerate(items)))
+                else:
+                    sec.append(_md_bullets(items, platform))
+        elif btype == "codeblock":
+            code = content.get("code")
+            if code:
+                if label:
+                    sec.append(_bold(label, platform))
+                lang = block.get("lang", "")
+                sec.append("```%s\n%s\n```" % (lang, code))
+        elif btype == "qa":
+            pairs = _parse_qa(content)
+            if pairs:
+                if label:
+                    sec.append(_bold(label, platform))
+                for q, a in pairs:
+                    sec.append(_bold("问：%s" % q, platform))
+                    sec.append("答：%s" % a)
+        elif btype == "plain":
+            val = _tpl_source(content, src)
+            if val:
+                sec.append(str(val))
+    return "\n\n".join(sec)
+
+
+def _render_template_text(key, content):
+    """模板纯文本渲染（无 Markdown 符号）。"""
+    tpl = TEMPLATES.get(key)
+    if not tpl:
+        raise PresentError("未知模板：%s（可选：%s）" % (key, ", ".join(sorted(TEMPLATES))))
+    sec = []
+    if content.get("title"):
+        sec.append(content["title"])
+    for block in tpl["structure"]:
+        btype = block.get("type")
+        src = block.get("source")
+        label = block.get("label") or ""
+        if btype == "heading":
+            sec.append(label)
+        elif btype == "summary":
+            val = _tpl_source(content, src) or content.get("verdict") or content.get("headline")
+            if val:
+                sec.append(str(val))
+        elif btype == "table":
+            rows = content.get("rows")
+            if rows:
+                if label:
+                    sec.append(label)
+                headers, data = _table_parts(content)
+                sec.append(_text_table(headers, data))
+        elif btype == "list":
+            items = _tpl_source(content, src)
+            if items:
+                if label:
+                    sec.append(label)
+                if block.get("style") == "ordered":
+                    sec.append("\n".join("%d. %s" % (i + 1, it) for i, it in enumerate(items)))
+                else:
+                    sec.append(_text_bullets(items))
+        elif btype == "codeblock":
+            code = content.get("code")
+            if code:
+                if label:
+                    sec.append(label)
+                sec.append(str(code))
+        elif btype == "qa":
+            pairs = _parse_qa(content)
+            if pairs:
+                if label:
+                    sec.append(label)
+                for q, a in pairs:
+                    sec.append("问：%s" % q)
+                    sec.append("答：%s" % a)
+        elif btype == "plain":
+            val = _tpl_source(content, src)
+            if val:
+                sec.append(str(val))
+    return "\n\n".join(sec)
+
+
+# ---------------------------------------------------------------------------
+# 长度熔断（max_len）：先压缩列表、再降标题层级、最后硬截断，保留结论
+# ---------------------------------------------------------------------------
+
+def _enforce_max_len(text, max_len):
+    """max_len 熔断：压缩列表 → 降标题 → 硬截断；保留开头结论。"""
+    if max_len is None or len(text) <= max_len:
+        return text
+    lines = text.split("\n")
+    # pass 1: 压缩列表（每个连续列表段保留首项 + 省略号）
+    out = []
+    i = 0
+    while i < len(lines):
+        if re.match(r"^\s*(?:[-*•]|\d+\.)\s", lines[i]):
+            j = i
+            while j < len(lines) and re.match(r"^\s*(?:[-*•]|\d+\.)\s", lines[j]):
+                j += 1
+            out.append(lines[i])
+            if j - i > 1:
+                marker = lines[i][:1] if lines[i][:1] in "-*•" else "-"
+                out.append("%s …（其余已折叠）" % marker)
+            i = j
+        else:
+            out.append(lines[i])
+            i += 1
+    text = "\n".join(out)
+    if len(text) <= max_len:
+        return text
+    # pass 2: 降标题层级（## → ** 或去符号）
+    lines = text.split("\n")
+    out = []
+    for ln in lines:
+        m = re.match(r"^#{1,6}\s+(.+)$", ln)
+        if m:
+            out.append("**%s**" % m.group(1).strip())
+        else:
+            out.append(ln)
+    text = "\n".join(out)
+    if len(text) <= max_len:
+        return text
+    # pass 3: 硬截断，保留开头结论
+    return text[: max(1, max_len - 1)] + "…"
+
+
+def _resolve_test_python():
+    """测试用 Python 解释器解析：只接受绝对路径且 basename 以 python 开头的
+    YOTTA_TEST_PYTHON 覆盖，否则回退 sys.executable（TT2 安全修复）。"""
+    env = os.environ.get("YOTTA_TEST_PYTHON")
+    if env:
+        p = os.path.abspath(env)
+        base = os.path.basename(p).lower()
+        if os.path.isfile(p) and base.startswith("python"):
+            return p
+    return sys.executable
 
 
 # ---------------------------------------------------------------------------
@@ -888,7 +1191,8 @@ def _render_chart(cd, svg_out=None):
     }
 
 
-def present(raw, form=None, title=None, svg_out=None, explain=False):
+def present(raw, form=None, title=None, svg_out=None, explain=False,
+            platform="webchat", template=None, max_len=None):
     """呈现核心入口。
 
     raw: dict / JSON 字符串 / 纯文本
@@ -896,47 +1200,70 @@ def present(raw, form=None, title=None, svg_out=None, explain=False):
     title: 标题覆盖（可选）
     svg_out: 图表形态的本地 SVG 输出路径（可选）
     explain: 附判断说明（可选）
-    返回: {form, markdown, text, explain?, chart?}
+    platform: 平台自适应（webchat/discord/whatsapp/plain，默认 webchat）
+    template: 命名场景模板 key（vuln_report/faq/status，可选；优先于 form）
+    max_len: 长度熔断上限（字符数，可选）
+    返回: {form, markdown, text, explain?, chart?, warnings?}
     """
+    if platform not in PLATFORMS:
+        raise PresentError("未知平台：%s（可选：%s）" % (platform, ", ".join(PLATFORMS)))
     content = normalize_content(raw, title_override=title)
-    if form is not None:
-        f = str(form).strip().lower()
-        if f not in FORMS:
-            raise PresentError("未知形态：%s（可选：%s）" % (f, ", ".join(FORMS)))
-        reasons = ["用户显式指定 form=%s" % f]
+    if template is not None:
+        tpl_key = str(template).strip().lower()
+        if tpl_key not in TEMPLATES:
+            raise PresentError("未知模板：%s（可选：%s）" % (tpl_key, ", ".join(sorted(TEMPLATES))))
+        f = tpl_key
+        reasons = ["用户显式指定 template=%s" % tpl_key]
+        md = _render_template_md(tpl_key, content, platform=platform)
+        text = _render_template_text(tpl_key, content)
+        result = {"form": f, "markdown": md, "text": text}
     else:
-        f, reasons = decide_form(content)
+        if form is not None:
+            f = str(form).strip().lower()
+            if f not in FORMS:
+                raise PresentError("未知形态：%s（可选：%s）" % (f, ", ".join(FORMS)))
+            reasons = ["用户显式指定 form=%s" % f]
+        else:
+            f, reasons = decide_form(content)
 
-    if f == "chart":
-        if not content.get("chart_data"):
-            raise PresentError("形态 chart 需要 chart_data 字段")
-        chart = _render_chart(content["chart_data"], svg_out=svg_out)
-        md = _render_chart_md(content, chart, prefer_path=bool(svg_out))
-        text = _render_chart_text(content, chart)
-        result = {"form": f, "markdown": md, "text": text, "chart": chart}
-    elif f == "conclusion":
-        result = {"form": f, "markdown": _render_conclusion_md(content),
-                  "text": _render_conclusion_text(content)}
-    elif f == "table":
-        result = {"form": f, "markdown": _render_table_md(content),
-                  "text": _render_table_text(content)}
-    elif f == "checklist":
-        result = {"form": f, "markdown": _render_checklist_md(content),
-                  "text": _render_checklist_text(content)}
-    elif f == "prose":
-        result = {"form": f, "markdown": _render_prose_md(content),
-                  "text": _render_prose_text(content)}
-    elif f == "metrics":
-        result = {"form": f, "markdown": _render_metrics_md(content),
-                  "text": _render_metrics_text(content)}
-    elif f == "qa":
-        result = {"form": f, "markdown": _render_qa_md(content),
-                  "text": _render_qa_text(content)}
-    elif f == "report":
-        result = {"form": f, "markdown": _render_report_md(content),
-                  "text": _render_report_text(content)}
-    else:
-        raise PresentError("未实现的形态：%s" % f)
+        if f == "chart":
+            if not content.get("chart_data"):
+                raise PresentError("形态 chart 需要 chart_data 字段")
+            chart = _render_chart(content["chart_data"], svg_out=svg_out)
+            md = _render_chart_md(content, chart, prefer_path=bool(svg_out), platform=platform)
+            text = _render_chart_text(content, chart)
+            result = {"form": f, "markdown": md, "text": text, "chart": chart}
+        elif f == "conclusion":
+            result = {"form": f, "markdown": _render_conclusion_md(content, platform),
+                      "text": _render_conclusion_text(content)}
+        elif f == "table":
+            result = {"form": f, "markdown": _render_table_md(content, platform),
+                      "text": _render_table_text(content)}
+        elif f == "checklist":
+            result = {"form": f, "markdown": _render_checklist_md(content, platform),
+                      "text": _render_checklist_text(content)}
+        elif f == "prose":
+            result = {"form": f, "markdown": _render_prose_md(content, platform),
+                      "text": _render_prose_text(content)}
+        elif f == "metrics":
+            result = {"form": f, "markdown": _render_metrics_md(content, platform),
+                      "text": _render_metrics_text(content)}
+        elif f == "qa":
+            result = {"form": f, "markdown": _render_qa_md(content, platform),
+                      "text": _render_qa_text(content)}
+        elif f == "report":
+            result = {"form": f, "markdown": _render_report_md(content, platform),
+                      "text": _render_report_text(content)}
+        else:
+            raise PresentError("未实现的形态：%s" % f)
+
+    if max_len is not None:
+        try:
+            ml = int(max_len)
+        except (TypeError, ValueError):
+            raise PresentError("max_len 必须是正整数（当前：%s）" % max_len)
+        result["markdown"] = _enforce_max_len(result["markdown"], ml)
+        result["text"] = _enforce_max_len(result["text"], ml)
 
     if explain:
         result["explain"] = reasons
@@ -967,6 +1294,10 @@ def _build_parser():
     p.add_argument("--file", metavar="PATH", help="从文件读取内容（UTF-8）")
     p.add_argument("--content", metavar="TEXT", help="直接传入内容（JSON 或文本）")
     p.add_argument("--form", choices=FORMS, help="显式指定形态（缺省自动判断）")
+    p.add_argument("--template", metavar="KEY", help="命名场景模板：vuln_report/faq/status（优先于 --form）")
+    p.add_argument("--platform", choices=PLATFORMS, default="webchat",
+                   help="平台自适应：webchat/discord/whatsapp/plain（默认 webchat）")
+    p.add_argument("--max-len", metavar="N", type=int, help="长度熔断上限（字符数，可选）")
     p.add_argument("--title", metavar="T", help="覆盖标题")
     g = p.add_mutually_exclusive_group()
     g.add_argument("--md", action="store_true", help="输出 Markdown（默认）")
@@ -977,6 +1308,7 @@ def _build_parser():
     p.add_argument("--svg", metavar="PATH", help="图表形态：本地 SVG 输出路径")
     p.add_argument("--explain", action="store_true", help="附判断说明")
     p.add_argument("--list-forms", action="store_true", help="列出形态清单")
+    p.add_argument("--list-templates", action="store_true", help="列出命名场景模板清单")
     p.add_argument("--version", action="store_true", help="显示版本")
     return p
 
@@ -1035,6 +1367,11 @@ def cli(argv=None):
         for f in FORMS:
             print("  %-12s %s" % (f, FORM_DESC[f]))
         return 0
+    if args.list_templates:
+        print("元呈 yotta-present 命名场景模板（%d 个）：" % len(TEMPLATES))
+        for k, t in TEMPLATES.items():
+            print("  %-14s %s" % (k, t.get("title", "")))
+        return 0
 
     try:
         raw = _read_input(args)
@@ -1047,7 +1384,8 @@ def cli(argv=None):
 
     try:
         result = present(raw, form=args.form, title=args.title,
-                         svg_out=args.svg, explain=args.explain)
+                         svg_out=args.svg, explain=args.explain,
+                         platform=args.platform, template=args.template, max_len=args.max_len)
     except PresentError as e:
         print("错误：%s" % e, file=sys.stderr)
         return 2
