@@ -27,6 +27,18 @@ fully local and offline — no network, no external rendering service.</p>
   <a href="https://github.com/YottaMeta/yotta-present"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen" /></a>
 </p>
 
+## Quick start (30 seconds)
+
+```bash
+# 1. Feed a standard content object -> copyable conclusion card
+python3 scripts/yotta_present.py --content '{"title": "Result", "grade": "success", "verdict": "Passed", "bullets": ["point 1", "point 2"]}'
+
+# 2. Or feed plain text and let it polish automatically
+python3 scripts/yotta_present.py --file result.txt
+```
+
+From "feed content" to "copyable Markdown" in two steps. More in "Commands" and "Usage".
+
 ## What is this
 
 AI outputs come in all shapes — raw text dumps, overused tables, bare JSON. yotta-present is a
@@ -197,6 +209,55 @@ bash install.sh --list                  # list agent -> default dir
 
 After install, load the skill, follow the judgment layer in SKILL.md to pick a form, and use
 `yotta_present` CLI or MCP `present_result` to emit copyable results.
+
+## Before / after
+
+**Input** (plain text):
+
+```text
+Scanned 8 checkpoints, all passed, no high-risk issues found.
+```
+
+**Output** (auto conclusion card, copyable Markdown):
+
+```markdown
+# Scan result
+
+> 🟢 **Passed** — No high-risk issues found
+
+**Points**
+
+- All 8 checkpoints passed
+```
+
+## Tips
+
+| Tip | Command / flag |
+|---|---|
+| Force a form | `--form conclusion / table / checklist / prose / metrics / qa / report / chart` |
+| See the decision reason | `--explain` |
+| Save tokens | `--max-len 800` (compress lists, demote headings, then truncate; keep the conclusion) |
+| Platform adaptation | `--platform discord / whatsapp / plain` |
+| Paste into Word / email | `--text` plain output |
+| Bold key fields | `bold_keys: ["title", "verdict"]` |
+| Named templates | `--template vuln_report / faq / status` (definitions in references/templates.json) |
+
+## Errors
+
+- Exit codes: **0** success; **1** no input / read error; **2** validation or rendering error.
+- On error, stderr shows the **reason + a plain-language fix suggestion**.
+- FAQ and pitfalls: [references/faq.md](references/faq.md).
+
+## FAQ (quick reference)
+
+| Question | Answer (see references/faq.md) |
+|---|---|
+| No badge in output? | Use a standard content object ({title, grade, verdict, bullets}) |
+| table `columns` ignored? | Use rows object keys or 2D array + headers |
+| chart needs `chart_data`? | Pass chart_data (chart/labels/data) |
+| `--svg` error? | Chart form only; drop --svg for default data URI |
+| Wrong form? | Force --form; use --explain to see why |
+| MCP not loaded? | Check mcpServers + restart session; otherwise fall back to CLI |
 
 ## Boundaries
 

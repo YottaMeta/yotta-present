@@ -22,6 +22,18 @@
   <a href="https://github.com/YottaMeta/yotta-present"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen" /></a>
 </p>
 
+## 30 秒上手
+
+```bash
+# 1. 喂一个标准内容对象 → 拿到可复制的结论卡
+python3 scripts/yotta_present.py --content '{"title": "结论", "grade": "success", "verdict": "通过", "bullets": ["要点 1", "要点 2"]}'
+
+# 2. 或直接喂一段文本，自动美化
+python3 scripts/yotta_present.py --file result.txt
+```
+
+从「喂内容」到「拿可复制 Markdown」就这两步；更多命令见「命令一览」与「使用示例」。
+
 ## 这是什么
 
 AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱用表格、直接丢一坨 JSON。元呈 = 一个
@@ -187,6 +199,63 @@ bash install.sh --list                # 查看 智能体 -> 默认目录
 
 安装后即可在智能体中使用：加载技能后按 SKILL.md 判断层选形态，用 `yotta_present` CLI 或 MCP
 `present_result` 输出可复制结果。
+
+## 效果展示（输入 → 输出）
+
+**输入**（一段纯文本）：
+
+```text
+扫描了 8 个检测点，全部通过，没有发现高危风险。
+```
+
+**输出**（自动判为结论卡 + 可复制 Markdown）：
+
+```markdown
+# 扫描结果
+
+> 🟢 **通过** — 未发现高危风险
+
+**要点**
+
+- 全部 8 个检测点通过
+```
+
+**输入**（带数据想用图表）：
+
+```json
+{"chart_data": {"chart": "pie", "labels": ["A", "B"], "data": [3, 1]}}
+```
+
+**输出**：本地生成的 SVG 图表（默认 Markdown 内嵌 data URI，可复制自包含）。
+
+## 使用技巧
+
+| 技巧 | 命令 / 参数 |
+|---|---|
+| 想掌控形态 | 显式 `--form conclusion / table / checklist / prose / metrics / qa / report / chart` |
+| 看判断理由 | `--explain` |
+| 省 token | `--max-len 800`（先压列表、再降标题、最后截断，保留结论） |
+| 适配平台 | `--platform discord / whatsapp / plain` |
+| 复制到 Word / 邮件 | `--text` 纯文本输出 |
+| 关键字段加粗 | `bold_keys: ["title", "verdict"]` |
+| 场景模板复用 | `--template vuln_report / faq / status`（定义见 references/templates.json） |
+
+## 错误处理
+
+- 退出码：**0** = 成功；**1** = 无输入 / 读取错误；**2** = 内容校验或渲染错误。
+- 出错时 stderr 会给出**原因 + 修复建议**（人话版），照着提示改即可。
+- 常见问题与避坑详见 [references/faq.md](references/faq.md)。
+
+## 常见问题 FAQ（速查）
+
+| 问题 | 答案（详见 references/faq.md） |
+|---|---|
+| 想带徽章却没输出徽章？ | 用标准内容对象 JSON（{title, grade, verdict, bullets}） |
+| 表格 columns 不生效？ | 用 rows 对象列表键或二维数组 + headers |
+| 图表报「需要 chart_data」？ | 补 chart_data（chart/labels/data） |
+| --svg 报错？ | 仅图表形态支持；去掉 --svg 走默认 data URI |
+| 输出形态不对？ | 显式 --form；用 --explain 看理由 |
+| MCP 没加载？ | 检查 mcpServers + 重启会话；否则降级 CLI |
 
 ## 边界（红线）
 

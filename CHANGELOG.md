@@ -1,3 +1,13 @@
+## v0.2.1 (2026-09-01)
+
+评测反馈优化（文档 + 错误提示，功能不变）。
+
+- 新增 `references/faq.md`：12 条常见问题 / 避坑指南（徽章、columns、chart_data、--svg、形态选择、JSON 解析、MCP 加载、--text、max_len、平台差异、退出码、白名单例外）。
+- 错误提示友好化：CLI 出错时 stderr 附「修复建议」人话（内容为空 / JSON 解析 / 顶层对象 / 类型 / 数组 / chart_data / 形态 / 模板 / 图表渲染 / 平台 / max_len / 读文件 / --svg / 写文件 等 14 类）。
+- README 中英：新增「30 秒上手」「效果展示（输入→输出）」「使用技巧」「错误处理」「常见问题 FAQ 速查」。
+- SKILL.md：新增「常见问题 FAQ（速查）」小节，指向 references/faq.md。
+- 版本四件对齐 0.2.1（package.json / SKILL.md / CHANGELOG / CLI --version）。
+
 # 更新日志
 
 ## v0.2.0 (2026-09-01)
