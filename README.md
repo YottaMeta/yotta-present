@@ -108,6 +108,7 @@ Full reference (rows forms, chart_data, judgment rules, examples): `references/s
 | `--form <form>` | Force a form (auto-detected by default) |
 | `--template <key>` | Named scenario template: `vuln_report` / `faq` / `status` (takes precedence over `--form`) |
 | `--platform <p>` | Platform adaptation: `webchat` (default) / `discord` / `whatsapp` (tables → lists, headings → bold) / `plain` (strip Markdown symbols) |
+| `--channel <c>` | Render channel (default `auto`, mapped from platform): `r0` colorless baseline (no emoji) / `r1` emoji-enhanced; `r2`/`r3` reserved for later releases |
 | `--max-len <n>` | Length cap (chars): compress lists → downgrade headings → truncate, keeping the conclusion |
 | `--md / --text / --both / --json` | Markdown (default) / plain text / both / full JSON |
 | `--out <path>` | Write to file (`--both` writes .md and .txt; a directory is named by form) |
@@ -142,6 +143,9 @@ python3 scripts/yotta_present.py --content '<same as above>' --out result.md --b
 # Platform adaptation: Discord / WhatsApp (tables → lists, headings → bold) / plain terminal
 python3 scripts/yotta_present.py --content '<same as above>' --platform discord
 python3 scripts/yotta_present.py --content '<same as above>' --platform plain
+
+# Render channel (default auto: plain -> r0 no-emoji, others -> r1 emoji-enhanced); force colorless baseline
+python3 scripts/yotta_present.py --content '<same as above>' --channel r0
 
 # Named scenario template (define once, reuse everywhere): vulnerability report / FAQ / status
 python3 scripts/yotta_present.py --content '{"title": "SQLi", "grade": "danger", "verdict": "High risk", "rows": [["Injection point", "POST /demo.php"]], "steps": ["Step 1"], "code": "POST /demo.php HTTP/1.1", "fixes": ["Parametrized query"]}' --template vuln_report

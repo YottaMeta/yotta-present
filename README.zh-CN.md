@@ -100,6 +100,7 @@ AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱�
 | `--form <形态>` | 显式指定形态（缺省自动判断） |
 | `--template <key>` | 命名场景模板：`vuln_report` / `faq` / `status`（优先于 `--form`） |
 | `--platform <p>` | 平台自适应：`webchat`（默认）/ `discord` / `whatsapp`（表格转列表、标题转加粗）/ `plain`（去 Markdown 符号） |
+| `--channel <c>` | 渲染通道（默认 `auto` 按平台映射）：`r0` 保底无色（无 emoji）/ `r1` emoji 增强；`r2`/`r3` 后续版本开放 |
 | `--max-len <n>` | 长度熔断（字符数）：先压缩列表 → 再降标题 → 最后截断，保留结论 |
 | `--md / --text / --both / --json` | 输出 Markdown（默认）/ 纯文本 / 两者 / 完整 JSON |
 | `--out <路径>` | 写文件（`--both` 时写 .md 与 .txt；目录按形态命名） |
@@ -134,6 +135,9 @@ python3 scripts/yotta_present.py --content '<同上>' --out result.md --both
 # 平台自适应：Discord / WhatsApp（表格转列表、标题转加粗）/ 纯文本命令行
 python3 scripts/yotta_present.py --content '<同上>' --platform discord
 python3 scripts/yotta_present.py --content '<同上>' --platform plain
+
+# 渲染通道（默认 auto：plain→r0 去 emoji、其余→r1 emoji 增强）；强制无色基础 Markdown
+python3 scripts/yotta_present.py --content '<同上>' --channel r0
 
 # 命名场景模板（一次定义多处复用）：漏洞报告 / 问答 / 状态一句话
 python3 scripts/yotta_present.py --content '{"title": "SQL 注入", "grade": "danger", "verdict": "高危", "rows": [["注入点", "POST /demo.php"]], "steps": ["复现步骤"], "code": "POST /demo.php HTTP/1.1", "fixes": ["参数化查询"]}' --template vuln_report

@@ -1,3 +1,15 @@
+## v0.3.0 (2026-09-03)
+
+S7-M1 彩色呈现升级·开源第一步：R1 全面化 + channel×platform 通道映射 + plain 去 emoji（R0 保底无色）。
+
+- 新增渲染通道 `--channel` / MCP `channel`（auto/r0/r1/r2/r3）：auto 按 platform 自动映射——`plain` → `r0`（保底无色、无 emoji 徽章），`webchat`/`discord`/`whatsapp` → `r1`（emoji 增强 Markdown）；显式 `r2`/`r3`（富文本 HTML / SVG 整卡）属收费侧高级美化引擎，当前版本友好报错「尚未开放」。
+- R1 全面化：grade chip emoji（🟢🟡🔴⚪）与统一引用条覆盖各形态——有 grade/verdict/headline 即渲染 `> 🟢 **通过** — …` 摘要条（conclusion/table/checklist/prose/metrics/qa/report/模板 summary）；table/qa 的注记前补 `---` 分隔线，metrics 摘要条移至标题之后，与其它形态一致。
+- plain 去 emoji：`platform=plain`（auto→r0）时 Markdown 输出不再含 🟢🟡🔴⚪ 徽章（颜色不作唯一信息载体，文字徽章仍在）；text 输出本就无 emoji，保持不变。
+- 返回结果新增 `channel` 字段（生效通道），CLI `--json` / MCP `present_result` 均可见。
+- 文档：SKILL.md 新增「渲染通道与平台」；README 中英命令表 + 示例补 `--channel`；references/schema.md 平台节扩为「渲染通道与平台」；references/faq.md 补「想去掉 emoji / 颜色」「R2/R3 何时可用」。
+- 测试：新增 R1/plain/channel 断言 33 条；双版本（3.8/3.13）全绿不回归（180/180 + SVG 72/72）。
+- 版本四件对齐 0.3.0（package.json / SKILL.md / CHANGELOG / CLI --version）；插件 yotta-present-plugin 同步 0.3.0。
+
 ## v0.2.1 (2026-09-01)
 
 评测反馈优化（文档 + 错误提示，功能不变）。

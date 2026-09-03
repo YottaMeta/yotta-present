@@ -396,9 +396,74 @@ def run_v020():
     check("SDI-4 explain 默认 true 声明", "默认 true" in sdi4 or "缺省返回判型理由" in sdi4)
 
 
+def run_v030():
+    """v0.3.0 M1：R1 通道（grade chip 覆盖形态）+ channel×platform 映射 + plain 去 emoji。"""
+    print("== v0.3.0 通道映射（channel×platform）==")
+    check("auto plain → r0", yp._resolve_channel("plain", "auto") == "r0")
+    check("auto webchat → r1", yp._resolve_channel("webchat", "auto") == "r1")
+    check("auto discord → r1", yp._resolve_channel("discord", "auto") == "r1")
+    check("auto whatsapp → r1", yp._resolve_channel("whatsapp", "auto") == "r1")
+    check("显式 r0", yp._resolve_channel("webchat", "r0") == "r0")
+    check("缺省 channel 回退 auto", yp._resolve_channel("plain", None) == "r0")
+    r0def = yp.present({"title": "t", "grade": "success", "verdict": "v"})
+    check("默认 webchat result.channel=r1", r0def.get("channel") == "r1")
+    r0pl = yp.present({"title": "t", "grade": "success", "verdict": "v"}, platform="plain")
+    check("plain result.channel=r0", r0pl.get("channel") == "r0")
+    check("r2 未开放报错", _raises(lambda: yp.present({"title": "t"}, channel="r2")))
+    check("r3 未开放报错", _raises(lambda: yp.present({"title": "t"}, channel="r3")))
+    check("channel 非法报错", _raises(lambda: yp.present({"title": "t"}, channel="bogus")))
+
+    print("== v0.3.0 R1：grade chip 覆盖形态 ==")
+    for frm in ("conclusion", "table", "checklist", "prose", "metrics", "qa"):
+        cc = {"title": "t", "grade": "success", "verdict": "通过", "rows": [["a", "b"], [1, 2]]}
+        if frm == "checklist":
+            cc = {"title": "t", "grade": "success", "verdict": "通过", "bullets": ["a"]}
+        elif frm == "prose":
+            cc = {"title": "t", "grade": "success", "verdict": "通过", "body": ["一段"]}
+        elif frm == "metrics":
+            cc = {"title": "t", "grade": "success", "verdict": "通过", "metrics": [{"label": "A", "value": 1}]}
+        elif frm == "qa":
+            cc = {"title": "t", "grade": "success", "verdict": "通过", "rows": [{"问题": "q", "回答": "a"}]}
+        rr = yp.present(cc, form=frm)
+        check("R1 %s 含 chip 🟢" % frm, "🟢" in rr["markdown"], rr["markdown"][:120])
+        rp = yp.present(cc, form=frm, platform="plain")
+        check("R0 %s 去 chip" % frm, "🟢" not in rp["markdown"], rp["markdown"][:120])
+
+    print("== v0.3.0 R1 引用条规范 ==")
+    bar = yp.present({"title": "t", "grade": "success", "verdict": "通过", "headline": "补充"}, form="checklist")
+    check("引用条 = chip+verdict+headline", "> 🟢 **通过** — 通过 — 补充" in bar["markdown"], bar["markdown"])
+    br0 = yp.present({"title": "t", "grade": "success", "verdict": "通过", "headline": "补充"}, form="checklist", platform="plain")
+    check("plain 引用条去符号去 emoji", "🟢" not in br0["markdown"] and ">" not in br0["markdown"] and "通过" in br0["markdown"])
+    rep_plain = yp.present({"title": "报告", "grade": "danger", "verdict": "存在风险", "rows": [["a", "b"], [1, 2]]}, form="report", platform="plain")
+    check("report plain 摘要去 emoji", "🔴" not in rep_plain["markdown"] and "存在风险" in rep_plain["markdown"])
+    rep_r1 = yp.present({"title": "报告", "grade": "danger", "verdict": "存在风险", "rows": [["a", "b"], [1, 2]]}, form="report")
+    check("report r1 摘要含 emoji", "🔴" in rep_r1["markdown"])
+    vt = yp.present({"title": "漏洞", "grade": "danger", "verdict": "高危", "rows": [["a", "b"]]}, template="vuln_report", platform="plain")
+    check("模板 plain 去 emoji", "🔴" not in vt["markdown"] and "高危" in vt["markdown"])
+
+    print("== v0.3.0 text 恒无 emoji / 分隔线 ==")
+    tx = yp.present({"title": "t", "grade": "success", "verdict": "通过", "bullets": ["a"]})
+    check("text 无 emoji", "🟢" not in tx["text"] and "通过" in tx["text"])
+    tn = yp.present({"title": "t", "rows": [["a", "b"], [1, 2]], "notes": ["注记"]})
+    check("table notes 前有分隔线", "---" in tn["markdown"] and "> 注：注记" in tn["markdown"])
+
+    print("== v0.3.0 CLI / MCP channel ==")
+    rcx = _run_cli(["--content", '{"title": "t", "grade": "success", "verdict": "v"}', "--channel", "r0"])
+    check("CLI --channel r0 去 emoji", rcx.returncode == 0 and "🟢" not in rcx.stdout)
+    rc2x = _run_cli(["--content", '{"title": "t"}', "--channel", "r2"])
+    check("CLI --channel r2 退出 2", rc2x.returncode == 2 and "尚未开放" in rc2x.stderr)
+    respc = m.handle_message({"jsonrpc": "2.0", "id": 40, "method": "tools/call",
+                              "params": {"name": "present_result",
+                                         "arguments": {"content": '{"title": "t", "grade": "success", "verdict": "v"}',
+                                                       "channel": "r0"}}})
+    tc = json.loads(respc["result"]["content"][0]["text"])
+    check("MCP channel=r0 去 emoji", respc["result"]["isError"] is False and tc.get("channel") == "r0" and "🟢" not in tc.get("markdown", ""))
+
+
 if __name__ == "__main__":
     run()
     run_v020()
+    run_v030()
     print("\n结果：%d 通过 / %d 失败" % (PASS, FAIL))
     if FAILED:
         print("失败项：%s" % ", ".join(FAILED))
