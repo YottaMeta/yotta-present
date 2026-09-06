@@ -292,6 +292,28 @@ def run():
     e7 = m.handle_message({"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
     check("通知不响应", e7 is None)
 
+    print("== MCP：2026-07-28 modern（无状态）==")
+    MM = {"_meta": {"io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                    "io.modelcontextprotocol/clientCapabilities": {}}}
+    dv = m.handle_message({"jsonrpc": "2.0", "id": 30, "method": "server/discover", "params": MM})
+    dr = dv["result"]
+    check("discover resultType=complete", dr.get("resultType") == "complete", str(dr))
+    check("discover supportedVersions=[2026-07-28]", dr.get("supportedVersions") == ["2026-07-28"], str(dr))
+    check("discover _meta.serverInfo", dr.get("_meta", {}).get("io.modelcontextprotocol/serverInfo", {}).get("name") == "yotta-present", str(dr.get("_meta")))
+    check("discover ttlMs/cacheScope", dr.get("ttlMs", 0) > 0 and dr.get("cacheScope") == "public", str(dr))
+    mlist = m.handle_message({"jsonrpc": "2.0", "id": 31, "method": "tools/list", "params": MM})
+    check("modern tools/list resultType+ttlMs", mlist["result"].get("resultType") == "complete" and mlist["result"].get("ttlMs", 0) > 0, str(mlist))
+    mcall = m.handle_message({"jsonrpc": "2.0", "id": 32, "method": "tools/call", "params": dict(MM, **{
+        "name": "present_result", "arguments": {"content": '{"title": "t", "bullets": ["a"], "grade": "success"}'}})})
+    check("modern tools/call resultType+内容", mcall["result"].get("resultType") == "complete" and mcall["result"].get("isError") is False, str(mcall)[:120])
+    mb = m.handle_message({"jsonrpc": "2.0", "id": 33, "method": "server/discover",
+                           "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "2025-11-25"}}})
+    check("modern 版本不支持 -32022", mb.get("error", {}).get("code") == -32022
+          and mb["error"]["data"]["supported"] == ["2026-07-28"] and mb["error"]["data"]["requested"] == "2025-11-25", str(mb))
+    mi = m.handle_message({"jsonrpc": "2.0", "id": 34, "method": "initialize", "params": MM})
+    check("modern initialize -32601", mi.get("error", {}).get("code") == -32601, str(mi))
+    check("legacy initialize protocolVersion=2025-11-25", init["result"]["protocolVersion"] == "2025-11-25", str(init))
+
     print("== stdio 端到端 ==")
     script = str(_HERE / "yotta_present_mcp.py")
     payloads = [

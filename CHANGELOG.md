@@ -1,3 +1,7 @@
+## v0.5.0 (2026-09-06)
+
+**MCP 协议对齐最新版 2026-07-28（无状态时代）**：yotta-present MCP 升级 dual-era——modern 直连（server/discover 免握手、逐请求 _meta 版本声明、resultType、-32022 版本错误）服务新客户端；legacy（initialize 握手，protocolVersion 2025-11-25）兼容旧客户端，旧形状响应零惊扰。SKILL 标注「基于 MCP 最新协议 2026-07-28（向后兼容 2025-11-25 及更早握手）」。测试 201/201（含 modern MCP 用例）。
+
 ## v0.4.0 (2026-09-05)
 
 S7-M2 色板 token 化（开源）：一处定义、全通道消费 + 图表 SVG 明暗双主题 + WCAG 对比度自查。
