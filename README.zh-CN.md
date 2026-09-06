@@ -101,6 +101,7 @@ AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱�
 | `--template <key>` | 命名场景模板：`vuln_report` / `faq` / `status`（优先于 `--form`） |
 | `--platform <p>` | 平台自适应：`webchat`（默认）/ `discord` / `whatsapp`（表格转列表、标题转加粗）/ `plain`（去 Markdown 符号） |
 | `--channel <c>` | 渲染通道（默认 `auto` 按平台映射）：`r0` 保底无色（无 emoji）/ `r1` emoji 增强；`r2`/`r3` 后续版本开放 |
+| `--theme <t>` | 图表 SVG 主题（默认 `light`）：`light` 亮色 / `dark` 暗色（深底浅字） |
 | `--max-len <n>` | 长度熔断（字符数）：先压缩列表 → 再降标题 → 最后截断，保留结论 |
 | `--md / --text / --both / --json` | 输出 Markdown（默认）/ 纯文本 / 两者 / 完整 JSON |
 | `--out <路径>` | 写文件（`--both` 时写 .md 与 .txt；目录按形态命名） |
@@ -138,6 +139,8 @@ python3 scripts/yotta_present.py --content '<同上>' --platform plain
 
 # 渲染通道（默认 auto：plain→r0 去 emoji、其余→r1 emoji 增强）；强制无色基础 Markdown
 python3 scripts/yotta_present.py --content '<同上>' --channel r0
+# 主题（图表暗色渲染）：--theme dark（默认 light）
+python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "bar", "labels": ["A", "B"], "data": [3, 5]}}' --form chart --theme dark --svg out/bar-dark.svg
 
 # 命名场景模板（一次定义多处复用）：漏洞报告 / 问答 / 状态一句话
 python3 scripts/yotta_present.py --content '{"title": "SQL 注入", "grade": "danger", "verdict": "高危", "rows": [["注入点", "POST /demo.php"]], "steps": ["复现步骤"], "code": "POST /demo.php HTTP/1.1", "fixes": ["参数化查询"]}' --template vuln_report
@@ -154,7 +157,7 @@ python3 scripts/yotta_present.py --content '<同上>' --max-len 800
 另一个 MCP server——`present_result` 的 `chart` 形态（`chart_data`）直接复用 12 图内核。
 AI **首次使用本技能时自动完成配置**（把 server 写入 `mcpServers` 并把护栏写入
 永久记忆），**每项持久变更前都会先征得你的明确同意**；你拒绝则不写入，自动降级 CLI，输出一致、功能不受影响。
-工具：`present_result`（支持 `form` / `template` / `platform` / `max_len` / `bold_keys` / `output` / `svg` / `explain`）、
+工具：`present_result`（支持 `form` / `template` / `platform` / `channel` / `theme` / `max_len` / `bold_keys` / `output` / `svg` / `explain`）、
 `present_forms`、`present_templates`。
 
 ```json

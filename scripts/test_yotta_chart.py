@@ -84,6 +84,29 @@ def run():
     check("宽度钳制", yc.render("bar", {"data": [1], "width": 99999})["width"] <= 2400)
     check("XML 注入被转义", "<script>" not in yc.render("bar", {"data": [1], "title": "<script>alert(1)</script>"})["svg"])
 
+    print("== S7-M2 主题 token（色板 token 化）==")
+    check("THEMES = light/dark", yc.THEMES == ["light", "dark"])
+    check("light/dark 主题表齐", set(yc.THEME["themes"]) == {"light", "dark"})
+    check("light/dark 色板表齐", set(yc.THEME["chart_palettes"]) == {"light", "dark"})
+    check("PALETTES / DARK_PALETTES 5 套同名", set(yc.PALETTES) == set(yc.DARK_PALETTES) and len(yc.PALETTES) == 5)
+    check("语义色名含 GRADE 四档 + neutral",
+          {"success", "warn", "danger", "info", "neutral"} <= set(yc.THEME.get("semantic", {})))
+    cok, _ = yc.check_contrast()
+    check("WCAG 对比度自查全过 (>=4.5)", cok)
+    r_light = yc.render("bar", {"labels": ["A", "B"], "data": [3, 5], "title": "t", "theme": "light"})
+    check("light svg 白底", 'fill="#ffffff"' in r_light["svg"], r_light["svg"][:160])
+    r_dark = yc.render("bar", {"labels": ["A", "B"], "data": [3, 5], "title": "t", "theme": "dark"})
+    check("dark svg 深底", 'fill="#1E2329"' in r_dark["svg"], r_dark["svg"][:160])
+    check("dark meta.theme", r_dark["meta"]["theme"] == "dark")
+    check("dark 无残留占位符", not any(mk in r_dark["svg"] for mk in yc._T_MARKERS))
+    r_unk = yc.render("bar", {"labels": ["A", "B"], "data": [3, 5], "theme": "bogus"})
+    check("未知主题回退 light", r_unk["meta"]["theme"] == "light" and 'fill="#ffffff"' in r_unk["svg"])
+    out = os.path.join(tmpdir, "dark-bar.svg")
+    yc.render("bar", {"labels": ["A", "B"], "data": [3, 5], "theme": "dark", "out": out})
+    with open(out, "r", encoding="utf-8") as f:
+        svg_file = f.read()
+    check("dark 写文件含深底", 'fill="#1E2329"' in svg_file)
+
     shutil.rmtree(tmpdir, ignore_errors=True)
 
 

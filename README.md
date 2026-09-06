@@ -109,6 +109,7 @@ Full reference (rows forms, chart_data, judgment rules, examples): `references/s
 | `--template <key>` | Named scenario template: `vuln_report` / `faq` / `status` (takes precedence over `--form`) |
 | `--platform <p>` | Platform adaptation: `webchat` (default) / `discord` / `whatsapp` (tables → lists, headings → bold) / `plain` (strip Markdown symbols) |
 | `--channel <c>` | Render channel (default `auto`, mapped from platform): `r0` colorless baseline (no emoji) / `r1` emoji-enhanced; `r2`/`r3` reserved for later releases |
+| `--theme <t>` | Theme for chart SVG (default `light`): `light` / `dark` (dark background, light text) |
 | `--max-len <n>` | Length cap (chars): compress lists → downgrade headings → truncate, keeping the conclusion |
 | `--md / --text / --both / --json` | Markdown (default) / plain text / both / full JSON |
 | `--out <path>` | Write to file (`--both` writes .md and .txt; a directory is named by form) |
@@ -146,6 +147,8 @@ python3 scripts/yotta_present.py --content '<same as above>' --platform plain
 
 # Render channel (default auto: plain -> r0 no-emoji, others -> r1 emoji-enhanced); force colorless baseline
 python3 scripts/yotta_present.py --content '<same as above>' --channel r0
+# Theme (dark chart SVG): --theme dark (default light)
+python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "bar", "labels": ["A", "B"], "data": [3, 5]}}' --form chart --theme dark --svg out/bar-dark.svg
 
 # Named scenario template (define once, reuse everywhere): vulnerability report / FAQ / status
 python3 scripts/yotta_present.py --content '{"title": "SQLi", "grade": "danger", "verdict": "High risk", "rows": [["Injection point", "POST /demo.php"]], "steps": ["Step 1"], "code": "POST /demo.php HTTP/1.1", "fixes": ["Parametrized query"]}' --template vuln_report
@@ -164,7 +167,7 @@ the 12-chart kernel. The AI **auto-configures this MCP on first use** (writes th
 into `mcpServers` and records the guardrail in permanent memory) — **after obtaining your
 explicit consent** for each persistent change; if you decline, it falls back to the CLI
 with identical output and no functionality is lost. Tools: `present_result` (with
-`form` / `template` / `platform` / `max_len` / `bold_keys` / `output` / `svg` / `explain`),
+`form` / `template` / `platform` / `channel` / `theme` / `max_len` / `bold_keys` / `output` / `svg` / `explain`),
 `present_forms`, `present_templates`.
 
 ```json

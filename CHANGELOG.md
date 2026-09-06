@@ -1,8 +1,21 @@
+## v0.4.0 (2026-09-05)
+
+S7-M2 色板 token 化（开源）：一处定义、全通道消费 + 图表 SVG 明暗双主题 + WCAG 对比度自查。
+
+- 新增 `references/theme.json`：声明式主题 token（light/dark 基础色 + 语义色 + 形态主色 + 图表色板），缺失/损坏自动回退内置，社区可贡献、可热更新。
+- 渲染内核去硬编码：yotta_chart 全部角色色（背景/标题/正文/次要/网格/轴线/表面/边框/彩色块描边与文字）改经 token 取色，颜色只出现在 token 定义处。
+- 新增 `--theme light|dark`（CLI / MCP `present_result` / chart_data）：dark = 深底浅字暗色图表，含各色板 dark 变体；默认 light 视觉与 0.3.0 一致（次要文字微调至 WCAG AA）。
+- 新增 `python scripts/yotta_chart.py --check-contrast`：WCAG 对比度自查（正文/背景配对 ≥ 4.5:1），不达标即非 0 退出（防社区 token 破坏无障碍底线）。
+- 语义色 token 与 GRADE_META 对齐（success/warn/danger/info/neutral），为 R2/R3 高级美化通道铺好取色地基。
+- 文档：SKILL.md / README 中英命令表与示例补 `--theme`；CHANGELOG。
+- 测试：新增 S7-M2 断言（present 12 + chart 12）；双版本全绿不回归（192/192 + SVG 84/84）。
+- 版本五件对齐 0.4.0（package.json / SKILL.md / CHANGELOG / CLI --version / MCP serverInfo）；插件 yotta-present-plugin 同步 0.4.0。
+
 ## v0.3.0 (2026-09-03)
 
 S7-M1 彩色呈现升级·开源第一步：R1 全面化 + channel×platform 通道映射 + plain 去 emoji（R0 保底无色）。
 
-- 新增渲染通道 `--channel` / MCP `channel`（auto/r0/r1/r2/r3）：auto 按 platform 自动映射——`plain` → `r0`（保底无色、无 emoji 徽章），`webchat`/`discord`/`whatsapp` → `r1`（emoji 增强 Markdown）；显式 `r2`/`r3`（富文本 HTML / SVG 整卡）属收费侧高级美化引擎，当前版本友好报错「尚未开放」。
+- 新增渲染通道 `--channel` / MCP `channel`（auto/r0/r1/r2/r3）：auto 按 platform 自动映射——`plain` → `r0`（保底无色、无 emoji 徽章），`webchat`/`discord`/`whatsapp` → `r1`（emoji 增强 Markdown）；显式 `r2`/`r3`（富文本 HTML / SVG 整卡）属高级美化引擎（后续版本推出），当前版本友好报错「尚未开放」。
 - R1 全面化：grade chip emoji（🟢🟡🔴⚪）与统一引用条覆盖各形态——有 grade/verdict/headline 即渲染 `> 🟢 **通过** — …` 摘要条（conclusion/table/checklist/prose/metrics/qa/report/模板 summary）；table/qa 的注记前补 `---` 分隔线，metrics 摘要条移至标题之后，与其它形态一致。
 - plain 去 emoji：`platform=plain`（auto→r0）时 Markdown 输出不再含 🟢🟡🔴⚪ 徽章（颜色不作唯一信息载体，文字徽章仍在）；text 输出本就无 emoji，保持不变。
 - 返回结果新增 `channel` 字段（生效通道），CLI `--json` / MCP `present_result` 均可见。

@@ -9,6 +9,7 @@ MCP（initialize / tools.list / tools.call / 错误路径 / stdio 端到端）�
 运行：python scripts/test_yotta_present.py
 说明：本测试只在本地生成临时 SVG / 文件，不联网、不依赖其它库。
 """
+import base64
 import io
 import json
 import os
@@ -22,6 +23,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 import yotta_present as yp  # noqa: E402
 import yotta_present_mcp as m  # noqa: E402
+import yotta_chart as yc  # noqa: E402
 
 PASS = 0
 FAIL = 0
@@ -460,10 +462,49 @@ def run_v030():
     check("MCP channel=r0 去 emoji", respc["result"]["isError"] is False and tc.get("channel") == "r0" and "🟢" not in tc.get("markdown", ""))
 
 
+def run_v040():
+    """v0.4.0 S7-M2：色板 token 化（theme 参数 / CLI+MCP theme / 对比度自查）。"""
+    print("== v0.4.0 主题（theme token）==")
+    check("THEMES = light/dark", yp.THEMES == ["light", "dark"])
+    check("语义色名与 GRADE_META 对齐", set(yp.GRADE_META) <= set(yc.THEME.get("semantic", {})))
+    cok, _ = yc.check_contrast()
+    check("WCAG 对比度自查全过 (>=4.5)", cok)
+    tmpdir = tempfile.mkdtemp(prefix="yotta-present-v040-")
+    chart = {"chart": "bar", "labels": ["A", "B"], "data": [3, 5]}
+    out_dark = os.path.join(tmpdir, "dark.svg")
+    rd = yp.present({"title": "t", "chart_data": chart}, form="chart", theme="dark", svg_out=out_dark)
+    check("present theme=dark 写暗色 SVG", os.path.isfile(out_dark) and 'fill="#1E2329"' in open(out_dark, encoding="utf-8").read())
+    _b64 = rd["chart"]["data_uri"].split(",", 1)[1]
+    check("chart meta data_uri 含深底", 'fill="#1E2329"' in base64.b64decode(_b64).decode("utf-8"))
+    out_light = os.path.join(tmpdir, "light.svg")
+    yp.present({"title": "t", "chart_data": chart}, form="chart", theme="light", svg_out=out_light)
+    check("present theme=light 写亮色 SVG", os.path.isfile(out_light) and 'fill="#ffffff"' in open(out_light, encoding="utf-8").read())
+    check("theme 非法报错", _raises(lambda: yp.present({"title": "t"}, theme="bogus")))
+    rcx = _run_cli(["--form", "chart", "--content", json.dumps({"chart_data": chart}), "--theme", "dark", "--svg", out_dark])
+    check("CLI --theme dark 退出 0", rcx.returncode == 0)
+    check("CLI --theme dark 写暗色", 'fill="#1E2329"' in open(out_dark, encoding="utf-8").read())
+    rbad = _run_cli(["--form", "chart", "--content", json.dumps({"chart_data": chart}), "--theme", "neon"])
+    check("CLI --theme 非法退出 2", rbad.returncode == 2)
+    respc = m.handle_message({"jsonrpc": "2.0", "id": 60, "method": "tools/call",
+                              "params": {"name": "present_result",
+                                         "arguments": {"content": json.dumps({"chart_data": chart}),
+                                                       "form": "chart", "theme": "dark", "output": "json"}}})
+    tc = json.loads(respc["result"]["content"][0]["text"])
+    b64 = tc.get("chart", {}).get("data_uri", "")
+    dark_ok = b64.startswith("data:image/svg+xml;base64,") and 'fill="#1E2329"' in base64.b64decode(b64.split(",", 1)[1]).decode("utf-8")
+    check("MCP theme=dark data_uri 含深底", respc["result"]["isError"] is False and dark_ok)
+    resp_bad = m.handle_message({"jsonrpc": "2.0", "id": 61, "method": "tools/call",
+                                 "params": {"name": "present_result",
+                                            "arguments": {"content": '{"title": "t"}', "theme": "neon"}}})
+    check("MCP theme 非法 isError", resp_bad["result"]["isError"] is True)
+    shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 if __name__ == "__main__":
     run()
     run_v020()
     run_v030()
+    run_v040()
     print("\n结果：%d 通过 / %d 失败" % (PASS, FAIL))
     if FAILED:
         print("失败项：%s" % ", ".join(FAILED))
