@@ -1,3 +1,17 @@
+## v0.6.0 (2026-09-11)
+
+P0-0 内容保真与 dogfooding gate：元呈从「字段驱动渲染」升级为「块级内容保真渲染」，显式形态不再拥有丢正文的权利。
+
+- 新增 Markdown 顺序块级 AST：标题、段落、列表（含有序/复选）、表格、引用、代码、问答、图表；混合内容按原顺序保真。
+- 表格双兼容：Markdown table 可直接进入 `table` / `report` 等形态，不再要求用户改写成 JSON `rows`；JSON `rows` 既有路径保持不变。
+- 新增内容保真门禁：候选 `form` / `template` 渲染后执行块覆盖校验；无法完整保留内容时自动降级 `report-safe`，禁止 title-only 静默失败。
+- 返回结果新增 `fallback`（来源、目标、原因）与 `fidelity`（源块、保留块、丢弃块、压缩块、建议形态）；`--explain` 说明保留、压缩、丢弃与降级取舍。
+- `max_len` 长度熔断不再假成功：被截断/压缩的块会进入 `fidelity.dropped` / `fidelity.compressed`，`explain` 只报告实际保留块。
+- 修复 Windows 测试基建编码：CLI 子进程显式 `PYTHONIOENCODING=utf-8`，避免 stderr 按本机 ANSI 输出导致测试崩溃。
+- 固化 A-01～A-10 内容保真回归（status 正文、checklist 表格、report 表格、Markdown/JSON 双表格、QA、混合内容、长文+代码、模板失败、空内容）与 `max_len` 真实取舍测试。
+- 测试：`python scripts/test_yotta_present.py` 224 通过 / 0 失败。
+- 版本对齐 0.6.0（package.json / SKILL.md / CHANGELOG / CLI --version / chart CLI）。
+
 ## v0.5.0 (2026-09-06)
 
 **MCP 协议对齐最新版 2026-07-28（无状态时代）**：yotta-present MCP 升级 dual-era——modern 直连（server/discover 免握手、逐请求 _meta 版本声明、resultType、-32022 版本错误）服务新客户端；legacy（initialize 握手，protocolVersion 2025-11-25）兼容旧客户端，旧形状响应零惊扰。SKILL 标注「基于 MCP 最新协议 2026-07-28（向后兼容 2025-11-25 及更早握手）」。测试 201/201（含 modern MCP 用例）。

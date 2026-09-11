@@ -54,8 +54,10 @@ def _raises(fn):
 def _run_cli(args, inp=None):
     script = str(_HERE / "yotta_present.py")
     py = yp._resolve_test_python()
+    env = os.environ.copy()
+    env.setdefault("PYTHONIOENCODING", "utf-8")
     return subprocess.run([py, script] + args, input=inp, capture_output=True,
-                          text=True, encoding="utf-8", timeout=60)
+                          text=True, encoding="utf-8", env=env, timeout=60)
 
 
 def run():
@@ -378,7 +380,8 @@ def run_v020():
     st = yp.present({"headline": "一切正常"}, template="status")
     check("模板 status 纯文本", "一切正常" in st["markdown"])
     check("模板缺 source 跳过", "NOPE" not in yp.present({"title": "t"}, template="vuln_report")["markdown"])
-    check("模板未知报错", _raises(lambda: yp.present({"title": "t"}, template="nope")))
+    unknown_tpl = yp.present({"title": "t", "body": ["正文保留"]}, template="nope")
+    check("模板未知安全回退", unknown_tpl.get("fallback", {}).get("to") == "report" and "正文保留" in unknown_tpl["markdown"])
 
     print("== v0.2.0 codeblock / bold_keys / max_len ==")
     cb = yp.present({"title": "t", "code": "print(1)"}, template="vuln_report")
@@ -522,11 +525,88 @@ def run_v040():
     shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+def run_v060_fidelity():
+    """v0.6.0 P0-0：内容保真、双表格兼容、显式形态安全降级。"""
+    print("== v0.6.0 P0-0 内容保真回归 ==")
+
+    status_md = "# 状态\n\n服务已恢复，剩余 1 个告警。"
+    a01 = yp.present(status_md, template="status", explain=True)
+    check("A-01 status 不丢正文", "服务已恢复" in a01["markdown"] and "剩余 1 个告警" in a01["markdown"])
+    check("A-01 status 降级可观测", a01.get("fallback", {}).get("to") == "report")
+
+    table_md = "# 对比\n\n| A | B |\n| --- | --- |\n| 1 | 2 |"
+    a02 = yp.present(table_md, form="checklist", explain=True)
+    check("A-02 checklist 不压平表格", "| A | B |" in a02["markdown"] and "| 1 | 2 |" in a02["markdown"])
+
+    a03 = yp.present(table_md, form="report")
+    check("A-03 report 表格可渲染", "| A | B |\n| --- | --- |\n| 1 | 2 |" in a03["markdown"])
+
+    a04 = yp.present(table_md, form="table")
+    check("A-04 Markdown table 可进 table", a04["form"] == "table" and "| 1 | 2 |" in a04["markdown"])
+
+    a05 = yp.present('{"title":"JSON 表","rows":[{"A":"1","B":"2"}]}', form="table")
+    check("A-05 JSON rows 不回退", a05["form"] == "table" and "| 1 | 2 |" in a05["markdown"])
+
+    qa_md = "# FAQ\n\n问：这是什么\n答：这是必须保留的答案"
+    a06 = yp.present(qa_md, form="qa")
+    check("A-06 QA 问答保留", "问：这是什么" in a06["markdown"] and "这是必须保留的答案" in a06["markdown"])
+
+    mixed_md = """# 混合交付
+
+> 结论：整改完成
+
+| 检查 | 结果 |
+| --- | --- |
+| 保真 | 通过 |
+
+1. 第一步
+2. 第二步
+
+> 注：不要丢内容
+"""
+    a07 = yp.present(mixed_md, form="checklist", explain=True)
+    for token in ("结论：整改完成", "| 保真 | 通过 |", "1. 第一步", "2. 第二步", "注：不要丢内容"):
+        check("A-07 混合内容保留 %s" % token, token in a07["markdown"])
+    check("A-07 混合内容降级 report", a07.get("fallback", {}).get("to") == "report")
+
+    long_md = """# 长文混合
+
+这是长文正文。
+
+| 项 | 值 |
+| --- | --- |
+| 覆盖 | 全 |
+
+```python
+print("code-must-live")
+```
+"""
+    a08 = yp.present(long_md, form="table", explain=True)
+    for token in ("这是长文正文。", "| 覆盖 | 全 |", 'print("code-must-live")'):
+        check("A-08 长文块保留 %s" % token, token in a08["markdown"])
+
+    a09 = yp.present({"title": "模板失败", "body": ["正文保留"]}, template="nope", explain=True)
+    check("A-09 模板失败安全回退", "正文保留" in a09["markdown"] and a09.get("fallback", {}).get("to") == "report")
+
+    check("A-10 空内容明确报错", _raises(lambda: yp.present("   ")))
+
+    capped = yp.present("# T\n\n正文一\n\n- 要点一\n- 要点二", max_len=10, explain=True)
+    check("max_len 熔断不假成功", capped["fidelity"]["dropped"] == ["段落", "列表"])
+    check("max_len explain 只报实际保留块", "保留块：标题" in "\n".join(capped["explain"]))
+
+    explain = a07.get("explain", [])
+    explain_text = "\n".join(str(x) for x in explain)
+    check("explain 说明保留块", "保留块" in explain_text and "表格" in explain_text)
+    check("explain 说明降级", "降级" in explain_text and "checklist" in explain_text)
+    check("fidelity 覆盖零丢弃", a07.get("fidelity", {}).get("dropped") == [])
+
+
 if __name__ == "__main__":
     run()
     run_v020()
     run_v030()
     run_v040()
+    run_v060_fidelity()
     print("\n结果：%d 通过 / %d 失败" % (PASS, FAIL))
     if FAILED:
         print("失败项：%s" % ", ".join(FAILED))

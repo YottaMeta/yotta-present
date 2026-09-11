@@ -53,6 +53,7 @@ content or makes value judgments for the user.
 ## Core value
 
 - **Unified presentation** — whatever the input (JSON / Markdown / plain text), output follows one design language (title / badge / metrics / bullets / notes).
+- **Content fidelity gate** — inputs are parsed into ordered blocks; if a requested form cannot preserve every block, yotta-present falls back to report-safe instead of silently dropping content.
 - **Copyable-first** — Markdown (paste into any Markdown editor) + plain text (paste into Word / email).
 - **AI-driven choice** — agents pick the form via the judgment layer; without an agent, `yotta_present` falls back deterministically, plus `--form` for explicit choice.
 - **Local SVG** — for distributions / trends / shares, the built-in 12-chart kernel renders SVG locally; Markdown embeds a data URI (self-contained, copyable) by default; with `--svg` it writes a local SVG file and references the path.
@@ -85,6 +86,8 @@ content or makes value judgments for the user.
 
 Fields: `title / headline / grade|verdict / metrics[] / rows[] / bullets[] / body[] / notes[] / chart_data? / form?`
 Full reference (rows forms, chart_data, judgment rules, examples): `references/schema.md`.
+
+Markdown tables and JSON `rows` are both supported. Explicit `--form` / `--template` requests are checked against the source blocks; incompatible requests safely downgrade to report-safe and expose `fallback` + `fidelity` in JSON output.
 
 ## Forms (open-source baseline: 8)
 
@@ -127,6 +130,9 @@ python3 scripts/yotta_present.py --content '{"title": "Conclusion", "grade": "su
 
 # Plain text input (auto-parsed + fallback polish)
 python3 scripts/yotta_present.py --file result.txt
+
+# Mixed Markdown (tables, lists, code): explicit form is fidelity-checked; use --json to inspect fallback/fidelity
+python3 scripts/yotta_present.py --file result.txt --form checklist --json
 
 # Plain text output (paste into Word / email)
 python3 scripts/yotta_present.py --content '<same as above>' --text
@@ -243,6 +249,7 @@ Scanned 8 checkpoints, all passed, no high-risk issues found.
 |---|---|
 | Force a form | `--form conclusion / table / checklist / prose / metrics / qa / report / chart` |
 | See the decision reason | `--explain` |
+| Check content trade-offs | `--json` returns `fallback` and `fidelity`; `--explain` lists preserved / compressed / dropped blocks |
 | Save tokens | `--max-len 800` (compress lists, demote headings, then truncate; keep the conclusion) |
 | Platform adaptation | `--platform discord / whatsapp / plain` |
 | Paste into Word / email | `--text` plain output |
@@ -264,6 +271,8 @@ Scanned 8 checkpoints, all passed, no high-risk issues found.
 | chart needs `chart_data`? | Pass chart_data (chart/labels/data) |
 | `--svg` error? | Chart form only; drop --svg for default data URI |
 | Wrong form? | Force --form; use --explain to see why |
+| Will an explicit form drop content? | No silent drops; incompatible forms fall back to report-safe with `fallback` / `fidelity` |
+| Markdown table accepted? | Yes; JSON rows remains the recommended structured input |
 | MCP not loaded? | Check mcpServers + restart session; otherwise fall back to CLI |
 
 ## Boundaries

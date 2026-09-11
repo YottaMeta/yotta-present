@@ -45,6 +45,7 @@ AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱�
 ## 核心价值
 
 - **统一呈现**——不管输入是 JSON / Markdown / 纯文本，输出都是元阁一致的设计语言（层级 / 徽章 / 指标 / 注记）。
+- **内容保真门禁**——先解析顺序内容块；显式形态无法完整保留时自动降级 report-safe，不静默丢正文。
 - **copyable-first**——Markdown（粘贴到任意 Markdown 编辑器）+ 纯文本（粘贴到 Word / 邮件）双输出。
 - **AI 自主选择**——智能体按判断层（内容类型 → 形态）主动选形态；未接智能体时 `yotta_present` 确定性兜底 + `--form` 显式指定。
 - **本地 SVG**——数值分布 / 趋势 / 占比时，复用 12 图内核在本机生成 SVG，默认 Markdown 内嵌 data URI（自包含可复制）；显式 `--svg` 时写本地 SVG 并以路径引用。
@@ -76,7 +77,9 @@ AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱�
 ```
 
 字段：`title / headline / grade|verdict / metrics[] / rows[] / bullets[] / body[] / notes[] / chart_data? / form?`
-完整说明见 `references/schema.md`（含 rows 三种形式、chart_data、判断规则、示例）。
+完整说明见 `references/schema.md`（含 rows 四种形式、内容保真门禁、chart_data、判断规则、示例）。
+
+Markdown 表格与 JSON `rows` 双兼容。显式 `--form` / `--template` 会先过内容保真校验；不兼容时安全降级 report-safe，并在 JSON 结果中返回 `fallback` 与 `fidelity`。
 
 ## 形态清单（开源基线 8 种）
 
@@ -119,6 +122,9 @@ python3 scripts/yotta_present.py --content '{"title": "结论", "grade": "succes
 
 # 纯文本输入（自动解析 + 兜底美化）
 python3 scripts/yotta_present.py --file result.txt
+
+# 混合 Markdown（表格 / 列表 / 代码）：显式形态会做保真校验；--json 可查看 fallback / fidelity
+python3 scripts/yotta_present.py --file result.txt --form checklist --json
 
 # 纯文本输出（复制到 Word / 邮件）
 python3 scripts/yotta_present.py --content '<同上>' --text
@@ -241,6 +247,7 @@ bash install.sh --list                # 查看 智能体 -> 默认目录
 |---|---|
 | 想掌控形态 | 显式 `--form conclusion / table / checklist / prose / metrics / qa / report / chart` |
 | 看判断理由 | `--explain` |
+| 查看内容取舍 | `--json` 返回 `fallback` 与 `fidelity`；`--explain` 列出保留 / 压缩 / 丢弃块 |
 | 省 token | `--max-len 800`（先压列表、再降标题、最后截断，保留结论） |
 | 适配平台 | `--platform discord / whatsapp / plain` |
 | 复制到 Word / 邮件 | `--text` 纯文本输出 |
@@ -262,6 +269,8 @@ bash install.sh --list                # 查看 智能体 -> 默认目录
 | 图表报「需要 chart_data」？ | 补 chart_data（chart/labels/data） |
 | --svg 报错？ | 仅图表形态支持；去掉 --svg 走默认 data URI |
 | 输出形态不对？ | 显式 --form；用 --explain 看理由 |
+| 显式形态会丢内容吗？ | 不会静默丢；不兼容时降级 report-safe，并返回 fallback / fidelity |
+| Markdown 表格能直接传吗？ | 可以；JSON rows 仍是结构化推荐格式 |
 | MCP 没加载？ | 检查 mcpServers + 重启会话；否则降级 CLI |
 
 ## 边界（红线）
