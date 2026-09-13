@@ -62,6 +62,8 @@ content or makes value judgments for the user.
 
 ## Why use it
 
+- **Host hook declaration** — `skill-manifest.json` declares `before_send` / `present_result`; hosts without pre-send interception get a visible `explicit-unverified` fallback instead of a false enforcement claim.
+
 | Advantage | Description |
 |---|---|
 | **Universal** | Any AI output: conclusions, comparisons, checklists, tutorials, reports, charts |

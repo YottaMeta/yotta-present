@@ -1,0 +1,38 @@
+{
+  "manifestVersion": 1,
+  "slug": "yotta-present",
+  "name": "元呈",
+  "package": "@yottameta/yotta-present",
+  "version": "0.6.2",
+  "runtime": {
+    "python": ">=3.8",
+    "node": ">=18"
+  },
+  "trust": "yottameta",
+  "install": {
+    "idempotent": true
+  },
+  "permissions": {
+    "filesystem": "user-skills-dir",
+    "network": "none",
+    "process": "child-process",
+    "note": "仅调用本包内 Python 渲染脚本；输出全部本地生成。"
+  },
+  "auto_apply": {
+    "mode": "hook",
+    "note": "最终消息包含结构化交付内容时，应先经过元呈渲染。"
+  },
+  "hooks": [
+    {
+      "event": "before_send",
+      "require_tool": "present_result",
+      "condition": "最终消息包含表格、报告、结论卡等结构化内容时",
+      "on_fail": "block",
+      "fallback": "explicit-unverified",
+      "evidence": [
+        "tool_call_id",
+        "host_transcript"
+      ]
+    }
+  ]
+}

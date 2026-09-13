@@ -1,6 +1,6 @@
 ---
 name: yotta-present
-version: 0.6.1
+version: 0.6.2
 description: 元呈 —— AI 输出的默认呈现层：智能体先把输出内容判为「内容类型」，再选「呈现形态」（结论卡/表格/正文/指标板/问答卡/报告/图表…），用 yotta_present CLI 或 present_result MCP 统一渲染成可复制的 Markdown / 纯文本（按需附本地 SVG）。平台自适应（--platform / platform）：webchat 完整 Markdown、discord/whatsapp 表格转列表+标题转加粗、plain 去符号；渲染通道（--channel / channel）：auto 按 platform 映射 plain→r0 去 emoji、其余→r1 emoji 徽章+引用条（r0 保底无色 / r1 增强，r2/r3 高级美化未开放）；命名场景模板（vuln_report/faq/status，references/templates.json 可热更新）一次定义多处复用；codeblock + bold_keys 加粗 + max_len 长度熔断。触发：默认——凡交付给用户的 AI 输出都经元呈（判型 → 选形态 → 渲染）呈现；例外见正文白名单。边界：不做交互式图表编辑器 / BI / 数据分析工具；图表只是呈现形态之一；不做内容改写 / 判断本身。AI 首次使用自动接入 yotta-present MCP（写 mcpServers + 永久记忆护栏，均需用户明确同意），输出默认统一呈现、未加载时降级 CLI。
 license: MIT
 metadata:
@@ -24,6 +24,11 @@ metadata:
 ```
 
 写入步骤（先征得用户同意）：说明将写入的内容与目的 → **获得用户明确同意** → 打开永久记忆文件 → 检查是否已存在 → **没有则原样写入并保存** → 回读核对 → 已有则跳过。若客户端永久记忆不可写 → 显式报告「永久记忆护栏未写入」，不要省略。
+
+## 宿主 hook 声明
+
+`skill-manifest.json` 声明 `before_send` / `present_result` 要求。宿主支持动作前拦截时可作为强制门禁；
+宿主不支持时按 `fallback: explicit-unverified` 降级，输出中明确标记，不宣称已验证或已强制。
 
 ## 这是什么
 

@@ -1,3 +1,11 @@
+## v0.6.2 (2026-09-13)
+
+**P0-4.2 元呈 before_send 试点**：
+
+- 新增 `skill-manifest.json`，声明 `before_send` / `present_result` / `fallback: explicit-unverified`。
+- 适配器按宿主能力诚实降级：Codex 无 `before_send` 原生事件，结果只能标记 `explicit-unverified`，不宣称强制。
+- 发布件包含 `skill-manifest.json`，供元阁 `hook evaluate` 读取并写审计证据。
+
 ## v0.6.1 (2026-09-11)
 
 顺序保真修复（dogfooding D-07）：有书写顺序的输入（Markdown / 纯文本 / 显式 `blocks`）新增块顺序校验；候选形态顺序不符时按不兼容处理，自动降级 report-safe。

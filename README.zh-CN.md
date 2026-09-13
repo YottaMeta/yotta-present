@@ -54,6 +54,8 @@ AI 输出的内容五花八门、有的难读难复用：纯文本堆砌、乱�
 
 ## 为什么用它
 
+- **宿主 hook 声明**——`skill-manifest.json` 声明 `before_send` / `present_result`；宿主不支持发送前拦截时明确降级为 `explicit-unverified`，不虚构强制能力。
+
 | 优势 | 说明 |
 |---|---|
 | **通用** | 任何 AI 输出都能接：结论 / 对比 / 清单 / 教程 / 报告 / 图表 |
