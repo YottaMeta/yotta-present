@@ -594,6 +594,29 @@ print("code-must-live")
     check("max_len 熔断不假成功", capped["fidelity"]["dropped"] == ["段落", "列表"])
     check("max_len explain 只报实际保留块", "保留块：标题" in "\n".join(capped["explain"]))
 
+    ordered_md = """还没开始——现在是这个状态：
+
+- P0-0：已发布
+- P0-1：已落盘
+- P0-2：未开工
+
+按规矩先出方案，等你点头。"""
+    a11 = yp.present(ordered_md, form="prose", explain=True)
+    md11 = a11["markdown"]
+    p_head = md11.find("还没开始")
+    p_item = md11.find("P0-2：未开工")
+    p_tail = md11.find("按规矩先出方案，等你点头。")
+    check("A-11 顺序保真：收尾段不提前", 0 <= p_head < p_item < p_tail)
+    check("A-11 顺序不符按不兼容降级", a11.get("fallback", {}).get("to") == "report")
+    check("A-11 fidelity 记录顺序保真", a11.get("fidelity", {}).get("order_preserved") is True)
+    a11b = yp.present(ordered_md)
+    md11b = a11b["markdown"]
+    check("A-11b 自动形态同样保序",
+          0 <= md11b.find("还没开始") < md11b.find("P0-2：未开工") < md11b.find("按规矩先出方案，等你点头。"))
+
+    a12 = yp.present("# T\n\n段落一\n\n- 要点一\n- 要点二", form="prose")
+    check("A-12 顺序可表达时不误降级", a12["form"] == "prose" and "fallback" not in a12)
+
     explain = a07.get("explain", [])
     explain_text = "\n".join(str(x) for x in explain)
     check("explain 说明保留块", "保留块" in explain_text and "表格" in explain_text)

@@ -53,7 +53,7 @@ content or makes value judgments for the user.
 ## Core value
 
 - **Unified presentation** — whatever the input (JSON / Markdown / plain text), output follows one design language (title / badge / metrics / bullets / notes).
-- **Content fidelity gate** — inputs are parsed into ordered blocks; if a requested form cannot preserve every block, yotta-present falls back to report-safe instead of silently dropping content.
+- **Content fidelity gate** — inputs are parsed into ordered blocks; if a requested form cannot preserve every block and their order, yotta-present falls back to report-safe instead of silently dropping or reordering content.
 - **Copyable-first** — Markdown (paste into any Markdown editor) + plain text (paste into Word / email).
 - **AI-driven choice** — agents pick the form via the judgment layer; without an agent, `yotta_present` falls back deterministically, plus `--form` for explicit choice.
 - **Local SVG** — for distributions / trends / shares, the built-in 12-chart kernel renders SVG locally; Markdown embeds a data URI (self-contained, copyable) by default; with `--svg` it writes a local SVG file and references the path.
@@ -87,7 +87,7 @@ content or makes value judgments for the user.
 Fields: `title / headline / grade|verdict / metrics[] / rows[] / bullets[] / body[] / notes[] / chart_data? / form?`
 Full reference (rows forms, chart_data, judgment rules, examples): `references/schema.md`.
 
-Markdown tables and JSON `rows` are both supported. Explicit `--form` / `--template` requests are checked against the source blocks; incompatible requests safely downgrade to report-safe and expose `fallback` + `fidelity` in JSON output.
+Markdown tables and JSON `rows` are both supported. Explicit `--form` / `--template` requests are checked against the source blocks (coverage + order); incompatible requests safely downgrade to report-safe and expose `fallback` + `fidelity` in JSON output.
 
 ## Forms (open-source baseline: 8)
 
@@ -249,7 +249,7 @@ Scanned 8 checkpoints, all passed, no high-risk issues found.
 |---|---|
 | Force a form | `--form conclusion / table / checklist / prose / metrics / qa / report / chart` |
 | See the decision reason | `--explain` |
-| Check content trade-offs | `--json` returns `fallback` and `fidelity`; `--explain` lists preserved / compressed / dropped blocks |
+| Check content trade-offs | `--json` returns `fallback` and `fidelity`; `--explain` lists preserved / compressed / dropped blocks and the order status |
 | Save tokens | `--max-len 800` (compress lists, demote headings, then truncate; keep the conclusion) |
 | Platform adaptation | `--platform discord / whatsapp / plain` |
 | Paste into Word / email | `--text` plain output |
@@ -271,7 +271,7 @@ Scanned 8 checkpoints, all passed, no high-risk issues found.
 | chart needs `chart_data`? | Pass chart_data (chart/labels/data) |
 | `--svg` error? | Chart form only; drop --svg for default data URI |
 | Wrong form? | Force --form; use --explain to see why |
-| Will an explicit form drop content? | No silent drops; incompatible forms fall back to report-safe with `fallback` / `fidelity` |
+| Will an explicit form drop content? | No silent drops or reordering; incompatible forms fall back to report-safe with `fallback` / `fidelity` |
 | Markdown table accepted? | Yes; JSON rows remains the recommended structured input |
 | MCP not loaded? | Check mcpServers + restart session; otherwise fall back to CLI |
 

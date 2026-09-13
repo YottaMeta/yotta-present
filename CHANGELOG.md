@@ -1,3 +1,13 @@
+## v0.6.1 (2026-09-11)
+
+顺序保真修复（dogfooding D-07）：有书写顺序的输入（Markdown / 纯文本 / 显式 `blocks`）新增块顺序校验；候选形态顺序不符时按不兼容处理，自动降级 report-safe。
+
+- 新增顺序保真校验：按源块顺序做单调锚点定位；「段落 → 列表 → 段落」这类交叉结构在字段驱动形态（如 `prose`）中不能保序时，自动降级 report-safe，`fallback.reason` 说明“无法保持内容块顺序”。
+- `fidelity` 新增 `order_checked` / `order_preserved` / `order_violations`，顺序变化不再无记录；`--explain` 增加「顺序」行。
+- JSON 字段输入（无书写顺序）不做顺序判定，避免误伤 report 目录 / 模板骨架等结构形态。
+- 回归：A-11 / A-11b（顺序保真 + 降级可观测）、A-12（顺序可表达时不误降级）；`python scripts/test_yotta_present.py` 229 通过 / 0 失败；chart 84 通过 / 0 失败。
+- 版本对齐 0.6.1（package.json / SKILL.md / CHANGELOG / CLI --version / chart CLI）。
+
 ## v0.6.0 (2026-09-11)
 
 P0-0 内容保真与 dogfooding gate：元呈从「字段驱动渲染」升级为「块级内容保真渲染」，显式形态不再拥有丢正文的权利。
