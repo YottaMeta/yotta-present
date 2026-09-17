@@ -51,6 +51,14 @@ def _raises(fn):
         return True
 
 
+def _error(fn):
+    try:
+        fn()
+    except yp.PresentError as e:
+        return e
+    return None
+
+
 def _run_cli(args, inp=None):
     script = str(_HERE / "yotta_present.py")
     py = yp._resolve_test_python()
@@ -80,6 +88,12 @@ def run():
     check("metrics 浮点两位", d5["metrics"][0]["value"] == "3.14")
     check("metrics 缺 value 报错", _raises(lambda: yp.normalize_content({"metrics": [{"label": "A"}]})))
     check("metrics 非对象报错", _raises(lambda: yp.normalize_content({"metrics": ["x"]})))
+    e1 = _error(lambda: yp.normalize_content({"metrics": ["x"]}))
+    check("metrics 非对象提示对象列表",
+          e1 is not None and "[{label, value" in (e1.hint or ""))
+    e2 = _error(lambda: yp.normalize_content({"metrics": [{"label": "A"}]}))
+    check("metrics 缺字段提示对象列表",
+          e2 is not None and "[{label, value" in (e2.hint or ""))
     check("rows 非法项报错", _raises(lambda: yp.normalize_content({"rows": [123]})))
     check("bullets 非数组报错", _raises(lambda: yp.normalize_content({"bullets": "x"})))
     check("chart_data 非对象报错", _raises(lambda: yp.normalize_content({"chart_data": [1]})))
