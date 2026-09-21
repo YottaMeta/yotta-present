@@ -638,12 +638,77 @@ print("code-must-live")
     check("fidelity 覆盖零丢弃", a07.get("fidelity", {}).get("dropped") == [])
 
 
+def run_v064_nested_fidelity():
+    """v0.6.4 C1：report 保留嵌套列表层级，保真门禁识别结构丢失。"""
+    print("== v0.6.4 C1 嵌套列表保真 ==")
+
+    nested_md = """# 排查报告
+
+1. 位置
+   - 子项 A：配置文件
+   - 子项 B：日志目录
+2. 判定
+   - 结论：需要复核
+   - 风险：低
+
+| 项 | 值 |
+|---|---|
+| 版本 | 0.3.2 |
+"""
+    report = yp.present(nested_md, form="report", explain=True)
+    report_md = report["markdown"]
+    check("C1-01 report 保留无序子项缩进",
+          "  - 子项 A：配置文件" in report_md and "  - 子项 B：日志目录" in report_md)
+    check("C1-02 report 保留父项同级与子项归属",
+          "\n2. 判定" in report_md and "\n  - 结论：需要复核" in report_md)
+    check("C1-03 report 保留表格", "| 版本 | 0.3.2 |" in report_md)
+    check("C1-04 report fidelity 列表保留",
+          report.get("fidelity", {}).get("dropped") == []
+          and "列表" in report.get("fidelity", {}).get("preserved", []))
+
+    flattened = """# 排查报告
+
+- 位置
+- 子项 A：配置文件
+- 子项 B：日志目录
+- 判定
+- 结论：需要复核
+- 风险：低
+
+| 项 | 值 |
+|---|---|
+| 版本 | 0.3.2 |
+"""
+    blocks = yp._source_blocks(yp.normalize_content(nested_md), preferred_form="report")
+    check("C1-05 门禁识别嵌套结构丢失",
+          yp._missing_blocks(blocks, flattened) == ["列表"])
+
+    ordered_md = """# 有序排查
+
+1. 父项
+   1. 子项一
+   2. 子项二
+"""
+    ordered = yp.present(ordered_md, form="report")
+    ordered_out = ordered["markdown"]
+    check("C1-06 report 保留有序嵌套",
+          "  1. 子项一" in ordered_out and "  2. 子项二" in ordered_out)
+    check("C1-07 text 保留嵌套层级", "  • 子项 A：配置文件" in report["text"])
+    cli = _run_cli(["--form", "report", "--json"], inp=nested_md)
+    cli_result = json.loads(cli.stdout) if cli.returncode == 0 else {}
+    check("C1-08 CLI --form report 保留嵌套",
+          cli.returncode == 0
+          and "  - 子项 A：配置文件" in cli_result.get("markdown", "")
+          and cli_result.get("fidelity", {}).get("dropped") == [])
+
+
 if __name__ == "__main__":
     run()
     run_v020()
     run_v030()
     run_v040()
     run_v060_fidelity()
+    run_v064_nested_fidelity()
     print("\n结果：%d 通过 / %d 失败" % (PASS, FAIL))
     if FAILED:
         print("失败项：%s" % ", ".join(FAILED))

@@ -1,3 +1,12 @@
+## v0.6.4 (2026-09-21)
+
+嵌套列表保真修复（YottaCode 实测 C1）：
+
+- `form=report` 保留嵌套有序 / 无序列表的层级与列表类型，不再把子项拍平成同级。
+- 内容保真门禁增加嵌套结构覆盖校验：深度或有序 / 无序类型丢失时按不兼容处理，不再误报 `fidelity.preserved`。
+- 新增 C1-01～C1-08 回归，覆盖无序嵌套、父项 / 子项归属、有序嵌套、纯文本输出、结构丢失识别与 CLI `--form report`；全量 239/239 通过。
+- 版本五件对齐 0.6.4（package.json / SKILL.md / skill-manifest.json / CLI / chart CLI）；插件 yotta-present-plugin 同步 0.6.4。
+
 ## v0.6.3 (2026-09-17)
 
 - `metrics` 明确要求对象列表 `[{label,value,unit?,tone?}]`；传入字符串 / 缺少字段时，错误提示直接给出完整示例。
