@@ -1,3 +1,13 @@
+## v0.6.5 (2026-09-22)
+
+**默认触发自检 + fidelity 语义澄清 + MCP schema 精简**
+
+- `SKILL.md` 增加发送前自检：只要含清单 / 表格 / 结论 / 汇总，必须先调用 `present_result`；白名单例外只豁免命中块，其余块仍走元呈。
+- `fidelity` 新增 `requested_form` / `final_form` / `requested_form_preserved` / `content_preserved`，明确区分“请求形态未保真”和“最终内容未保留”；`explain` 同步输出两项。
+- `present_result` 默认 MCP schema 从 12 个参数精简为 6 个：`content` / `form` / `template` / `output` / `explain` / `options`；高级参数统一放入 `options`，旧版顶层高级参数继续兼容。
+- 回归覆盖 fallback 双保真语义、正常形态保真、精简 schema、`options` 调用和旧参数兼容；present 测试 247/247 通过。
+- 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / CHANGELOG / 引擎 VERSION = 0.6.5。
+
 ## v0.6.4 (2026-09-21)
 
 嵌套列表保真修复（YottaCode 实测 C1）：

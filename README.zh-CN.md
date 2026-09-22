@@ -13,6 +13,8 @@
 <b>不是图表工具</b>，图表只是呈现形态之一。</p>
 <p align="center">零依赖（Python 3.8+ 标准库）；Windows + Linux + macOS；纯本地离线，不联网、不调远程服务。</p>
 
+> 🆕 **v0.6.5**：增加发送前自检和块级例外边界；`fidelity` 区分 `requested_form_preserved`（请求形态保真）与 `content_preserved`（最终内容保真）；`present_result` 默认 MCP schema 精简，高级参数放入 `options`，旧版顶层参数保持兼容。
+
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue" /></a>
   <a href="https://agentskills.io/"><img alt="Standard: agentskills.io" src="https://img.shields.io/badge/standard-agentskills.io-orange" /></a>

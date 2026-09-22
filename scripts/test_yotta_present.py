@@ -702,6 +702,62 @@ def run_v064_nested_fidelity():
           and cli_result.get("fidelity", {}).get("dropped") == [])
 
 
+def run_v065_contract():
+    """v0.6.5：区分请求形态保真与最终内容保真；MCP schema 默认精简。"""
+    print("== v0.6.5 保真语义与 MCP schema ==")
+
+    mixed = "# 检查结果\n\n段落说明。\n\n| 项 | 值 |\n|---|---|\n| 版本 | 1 |"
+    fallback = yp.present(mixed, form="checklist", explain=True)
+    fidelity = fallback.get("fidelity", {})
+    check("v065-01 fallback 保留请求形态信息",
+          fidelity.get("requested_form") == "checklist"
+          and fidelity.get("final_form") == "report")
+    check("v065-02 请求形态未保真但最终内容保真",
+          fidelity.get("requested_form_preserved") is False
+          and fidelity.get("content_preserved") is True
+          and fidelity.get("dropped") == [])
+    check("v065-03 explain 明确区分两种保真",
+          any("请求形态保真" in str(x) for x in fallback.get("explain", []))
+          and any("最终内容保真" in str(x) for x in fallback.get("explain", [])))
+
+    normal = yp.present("# 标题\n\n- 一\n- 二", form="checklist")
+    check("v065-04 未降级时请求形态保真",
+          normal.get("fidelity", {}).get("requested_form_preserved") is True
+          and normal.get("fidelity", {}).get("final_form") == "checklist")
+
+    tools = {tool["name"]: tool for tool in m.mcp_tools()}
+    props = tools["present_result"]["inputSchema"]["properties"]
+    check("v065-05 MCP present_result 默认 schema 精简",
+          set(props.keys()) == {"content", "form", "template", "output", "explain", "options"},
+          str(sorted(props.keys())))
+    check("v065-06 高级参数移入 options 描述",
+          "platform" in props["options"]["description"]
+          and "max_len" in props["options"]["description"]
+          and "svg" in props["options"]["description"])
+
+    options_resp = m.handle_message({
+        "jsonrpc": "2.0", "id": 40, "method": "tools/call",
+        "params": {"name": "present_result", "arguments": {
+            "content": '{"title": "t", "rows": [["a", "b"]]}',
+            "options": {"platform": "discord"},
+        }},
+    })
+    options_text = json.loads(options_resp["result"]["content"][0]["text"])
+    check("v065-07 options 高级参数可用",
+          options_resp["result"]["isError"] is False and "|" not in options_text.get("markdown", ""))
+
+    legacy_resp = m.handle_message({
+        "jsonrpc": "2.0", "id": 41, "method": "tools/call",
+        "params": {"name": "present_result", "arguments": {
+            "content": '{"title": "t", "rows": [["a", "b"]]}',
+            "platform": "discord",
+        }},
+    })
+    legacy_text = json.loads(legacy_resp["result"]["content"][0]["text"])
+    check("v065-08 旧版顶层高级参数保持兼容",
+          legacy_resp["result"]["isError"] is False and "|" not in legacy_text.get("markdown", ""))
+
+
 if __name__ == "__main__":
     run()
     run_v020()
@@ -709,6 +765,7 @@ if __name__ == "__main__":
     run_v040()
     run_v060_fidelity()
     run_v064_nested_fidelity()
+    run_v065_contract()
     print("\n结果：%d 通过 / %d 失败" % (PASS, FAIL))
     if FAILED:
         print("失败项：%s" % ", ".join(FAILED))

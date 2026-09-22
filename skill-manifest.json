@@ -3,7 +3,7 @@
   "slug": "yotta-present",
   "name": "元呈",
   "package": "@yottameta/yotta-present",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "runtime": {
     "python": ">=3.8",
     "node": ">=18"

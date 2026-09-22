@@ -18,6 +18,8 @@ long content via <code>--out</code>, or user’s one-liner / bare text.
 <p align="center">Zero external dependencies (Python 3.8+ standard library); Windows + Linux + macOS;
 fully local and offline — no network, no external rendering service.</p>
 
+> 🆕 **v0.6.5**: pre-send self-check and block-level exception scope; `fidelity` now separates `requested_form_preserved` from `content_preserved`; `present_result` exposes a compact default MCP schema with advanced options under `options` (legacy top-level arguments remain compatible).
+
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue" /></a>
   <a href="https://agentskills.io/"><img alt="Standard: agentskills.io" src="https://img.shields.io/badge/standard-agentskills.io-orange" /></a>
