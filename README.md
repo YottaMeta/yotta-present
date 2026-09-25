@@ -18,6 +18,7 @@ long content via <code>--out</code>, or user’s one-liner / bare text.
 <p align="center">Zero external dependencies (Python 3.8+ standard library); Windows + Linux + macOS;
 fully local and offline — no network, no external rendering service.</p>
 
+> 🆕 **v0.6.6**: explicit boundary for the default rendering rule — it is an opt-in enhancement, not a takeover: when the user asks for plain text or says to skip rendering, output goes out as-is, and project-specific output conventions win. Rendering never rewrites content or decisions, and a failed render falls back to the original text.
 > 🆕 **v0.6.5**: pre-send self-check and block-level exception scope; `fidelity` now separates `requested_form_preserved` from `content_preserved`; `present_result` exposes a compact default MCP schema with advanced options under `options` (legacy top-level arguments remain compatible).
 
 <p align="center">

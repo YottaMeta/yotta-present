@@ -13,6 +13,7 @@
 <b>不是图表工具</b>，图表只是呈现形态之一。</p>
 <p align="center">零依赖（Python 3.8+ 标准库）；Windows + Linux + macOS；纯本地离线，不联网、不调远程服务。</p>
 
+> 🆕 **v0.6.6**：给默认呈现规则补明确边界——它是可选增强而非强制接管：用户要裸文本或说不用元呈时按原样输出，项目/用户自有的输出规范优先；渲染不改写内容与结论，渲染失败退回原文。
 > 🆕 **v0.6.5**：增加发送前自检和块级例外边界；`fidelity` 区分 `requested_form_preserved`（请求形态保真）与 `content_preserved`（最终内容保真）；`present_result` 默认 MCP schema 精简，高级参数放入 `options`，旧版顶层参数保持兼容。
 
 <p align="center">

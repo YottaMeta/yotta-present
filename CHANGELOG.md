@@ -1,4 +1,9 @@
-## v0.6.5 (2026-09-22)
+## v0.6.6 (2026-09-25)
+
+口径修正：默认呈现规则补明确边界（ClawHub LLM 复核）。
+
+- SKILL.md 与中英 README 明确：呈现层是可选增强而非强制接管——用户要裸文本 / 说不用元呈时按原样输出，项目或用户自有输出规范优先；渲染不改写内容与结论，渲染失败退回原文。
+- 安装器加固：拒绝对符号链接目标写入、不做整目录删除；批量安装需 `--yes`。
 
 **默认触发自检 + fidelity 语义澄清 + MCP schema 精简**
 
@@ -7,6 +12,8 @@
 - `present_result` 默认 MCP schema 从 12 个参数精简为 6 个：`content` / `form` / `template` / `output` / `explain` / `options`；高级参数统一放入 `options`，旧版顶层高级参数继续兼容。
 - 回归覆盖 fallback 双保真语义、正常形态保真、精简 schema、`options` 调用和旧参数兼容；present 测试 247/247 通过。
 - 版本对齐：package.json / SKILL.md frontmatter / skill-manifest.json / CHANGELOG / 引擎 VERSION = 0.6.5。
+
+## v0.6.5 (2026-09-22)
 
 ## v0.6.4 (2026-09-21)
 
