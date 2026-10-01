@@ -1,3 +1,7 @@
+## v0.7.1 (2026-10-01)
+
+- 安装器卫生批次：`bin/install.js` / `install.sh` 统一（未知参数报错 exit 2、`--help` / `--version`、残留清理白名单、嵌套载荷保留）；由模板单一真源渲染，接入漂移门禁。
+
 ## v0.7.0 (2026-10-01)
 
 **R3 SVG 整卡开源 demo**（路线 B P5-A 降级方案）：conclusion / metrics / table 三形态 + 4 场景模板 + 品牌 token + 可编辑 SVG。
