@@ -13,6 +13,7 @@
 <b>不是图表工具</b>，图表只是呈现形态之一。</p>
 <p align="center">零依赖（Python 3.8+ 标准库）；Windows + Linux + macOS；纯本地离线，不联网、不调远程服务。</p>
 
+> 🆕 **v0.7.0**：R3 SVG 整卡开源 demo —— `--channel r3` 出可编辑整卡（conclusion / metrics / table 三形态 + release / weekly / compare / risk 四场景模板 + 品牌 token），文本保持 `<text>` 可直接改字改色，Markdown 侧仍附可复制文本。
 > 🆕 **v0.6.6**：给默认呈现规则补明确边界——它是可选增强而非强制接管：用户要裸文本或说不用元呈时按原样输出，项目/用户自有的输出规范优先；渲染不改写内容与结论，渲染失败退回原文。
 > 🆕 **v0.6.5**：增加发送前自检和块级例外边界；`fidelity` 区分 `requested_form_preserved`（请求形态保真）与 `content_preserved`（最终内容保真）；`present_result` 默认 MCP schema 精简，高级参数放入 `options`，旧版顶层参数保持兼容。
 
@@ -108,14 +109,16 @@ Markdown 表格与 JSON `rows` 双兼容。显式 `--form` / `--template` 会先
 | `--form <形态>` | 显式指定形态（缺省自动判断） |
 | `--template <key>` | 命名场景模板：`vuln_report` / `faq` / `status`（优先于 `--form`） |
 | `--platform <p>` | 平台自适应：`webchat`（默认）/ `discord` / `whatsapp`（表格转列表、标题转加粗）/ `plain`（去 Markdown 符号） |
-| `--channel <c>` | 渲染通道（默认 `auto` 按平台映射）：`r0` 保底无色（无 emoji）/ `r1` emoji 增强；`r2`/`r3` 后续版本开放 |
-| `--theme <t>` | 图表 SVG 主题（默认 `light`）：`light` 亮色 / `dark` 暗色（深底浅字） |
+| `--channel <c>` | 渲染通道（默认 `auto` 按平台映射）：`r0` 保底无色（无 emoji）/ `r1` emoji 增强 / `r3` SVG 整卡（开源 demo）；`r2` 后续版本开放 |
+| `--card <key>` | R3 整卡场景模板：`release` / `weekly` / `compare` / `risk`（需 `--channel r3`） |
+| `--brand <路径>` | R3 品牌 token 文件（JSON：`name` / `primary` / `accent` / `footer` / `logo`；logo 仅本地 PNG/JPEG） |
+| `--theme <t>` | 图表 / R3 整卡主题（默认 `light`）：`light` 亮色 / `dark` 暗色（深底浅字） |
 | `--max-len <n>` | 长度熔断（字符数）：先压缩列表 → 再降标题 → 最后截断，保留结论 |
 | `--md / --text / --both / --json` | 输出 Markdown（默认）/ 纯文本 / 两者 / 完整 JSON |
 | `--out <路径>` | 写文件（`--both` 时写 .md 与 .txt；目录按形态命名） |
-| `--svg <路径>` | 图表形态：本地 SVG 输出路径 |
+| `--svg <路径>` | 图表形态 / R3 整卡：本地 SVG 输出路径 |
 | `--explain` | 附判断说明（可解释性） |
-| `--list-forms / --list-templates / --version` | 形态清单 / 模板清单 / 版本 |
+| `--list-forms / --list-templates / --list-cards / --version` | 形态清单 / 模板清单 / 整卡模板清单 / 版本 |
 
 ## 使用示例
 
@@ -150,6 +153,11 @@ python3 scripts/yotta_present.py --content '<同上>' --platform plain
 
 # 渲染通道（默认 auto：plain→r0 去 emoji、其余→r1 emoji 增强）；强制无色基础 Markdown
 python3 scripts/yotta_present.py --content '<同上>' --channel r0
+# R3 整卡（开源 demo）：三形态 + 四场景模板，写可编辑 SVG
+python3 scripts/yotta_present.py --content '{"title": "发布结果", "grade": "success", "verdict": "全链收口", "metrics": [{"label": "回归", "value": 233, "unit": "项"}]}' --channel r3 --form conclusion --card release --svg out/release.svg
+python3 scripts/yotta_present.py --content '{"title": "数据快报", "metrics": [{"label": "新增", "value": 186, "unit": "次", "tone": "up"}]}' --channel r3 --card weekly --theme dark
+# 品牌 token：name/primary/accent/footer/logo（logo 仅本地 PNG/JPEG）
+python3 scripts/yotta_present.py --content '<同上>' --channel r3 --card release --brand references/brand.example.json
 # 主题（图表暗色渲染）：--theme dark（默认 light）
 python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "bar", "labels": ["A", "B"], "data": [3, 5]}}' --form chart --theme dark --svg out/bar-dark.svg
 
@@ -162,13 +170,30 @@ python3 scripts/yotta_present.py --content '<同上>' --max-len 800
 
 退出码：**0** = 成功；**1** = 无输入 / 读取错误；**2** = 内容校验或渲染错误。
 
+## R3 整卡（开源 demo）
+
+`--channel r3` 输出**可编辑 SVG 整卡**，面向「发图」场景（微信群 / 公众号 / 邮件配图）：图里的文字可直接在 Inkscape / Figma / 浏览器中改字改色。
+
+| 场景模板 | 形态 | 用途 |
+|---|---|---|
+| `release` | conclusion + 指标 | 版本发布 / 验收结论 |
+| `weekly` | metrics | 周报 / 使用统计快报 |
+| `compare` | table | 方案 / 产品对比 |
+| `risk` | conclusion + 明细表 | 安全 / 风险报告 |
+
+- 三形态 `conclusion` / `metrics` / `table`；不支持形态 / 缺数据会明确报错（非 0 退出 + 修复建议），不静默降级。
+- 品牌 token：`--brand <file>`（`name` / `primary` / `accent` / `footer` / `logo`）；默认空品牌、不打任何水印；logo 仅本地 PNG/JPEG（≤ 256 KB，不支持 SVG logo）。
+- 可编辑标准：文本全部 `<text>`、语义分层 id、无脚本 / 外链 / `<foreignObject>`；渲染后结构自检。
+- copyable-first 不变：Markdown / 纯文本仍随行输出同一内容（整卡不替代可复制文本）。
+- 输出：`--svg out.svg` 写文件；缺省在 Markdown 内嵌 data URI；`--json` 的 `card` 字段含 `svg`。
+
 ## MCP 用法（present_result）
 
 本技能只提供一个公开 MCP server：`yotta-present`（零依赖、数据不出本机）。纯图表**不需要**单独配置
 另一个 MCP server——`present_result` 的 `chart` 形态（`chart_data`）直接复用 12 图内核。
 AI **首次使用本技能时自动完成配置**（把 server 写入 `mcpServers` 并把护栏写入
 永久记忆），**每项持久变更前都会先征得你的明确同意**；你拒绝则不写入，自动降级 CLI，输出一致、功能不受影响。
-工具：`present_result`（支持 `form` / `template` / `platform` / `channel` / `theme` / `max_len` / `bold_keys` / `output` / `svg` / `explain`）、
+工具：`present_result`（支持 `form` / `template` / `platform` / `channel` / `theme` / `card` / `brand` / `max_len` / `bold_keys` / `output` / `svg` / `explain`）、
 `present_forms`、`present_templates`。
 
 ```json

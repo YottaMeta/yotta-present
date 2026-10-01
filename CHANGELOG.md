@@ -1,3 +1,17 @@
+## v0.7.0 (2026-10-01)
+
+**R3 SVG 整卡开源 demo**（路线 B P5-A 降级方案）：conclusion / metrics / table 三形态 + 4 场景模板 + 品牌 token + 可编辑 SVG。
+
+- 新增 `scripts/yotta_card.py` 整卡内核（复用 yotta_chart 的 XML 转义与主题 token，不改 chart）：三形态整卡、确定性 CJK / 西文折行、内容上限与截断提示、高度上限保护。
+- `--channel r3` 开放（r2 仍后续版本）：`--form conclusion|metrics|table`；不支持形态 / 缺数据明确报错（非 0 退出 + 修复建议），不静默降级。
+- 新增 4 个真实场景模板 `references/cards.json`（可热更新，内置回退）：`release` / `weekly` / `compare` / `risk`（风险卡 danger 主色 + 明细表）。
+- 品牌 token：`theme.json.brand`（默认空、不打水印）+ `--brand <file>`（`name` / `primary` / `accent` / `footer` / `logo`；白名单字段 + 十六进制校验；logo 仅本地 PNG/JPEG、≤256 KB、魔数校验，SVG logo 拒绝；无 logo 用 monogram 兜底）。
+- 可编辑 SVG 标准：文本全部 `<text>/<tspan>`、语义分层 id、无脚本 / 外链 / `<foreignObject>`；渲染后结构自检 fail-closed。`--svg` 写文件，缺省内嵌 data URI；`--json` 含 `card.svg`。
+- copyable-first 不变：R3 输出 = 整卡图 + 同内容可复制 md/text；文本层按整卡实际承载分节渲染，未承载内容触发既有保真门禁降级 report-safe（不静默丢内容）。
+- MCP `present_result` 支持 `channel=r3` + `options.card` / `options.brand`，返回 `card` 元数据（含 svg）。
+- 测试：新增 `scripts/test_yotta_card.py`（99 项：三形态 × 明暗 / 模板 / 折行 / 转义 / 可编辑自检 / 品牌 / 集成 / CLI / MCP）；`test_yotta_present.py` 248 项；Python 3.8 / 3.11 / 3.12 全绿。
+- 版本五件对齐 0.7.0（package.json / SKILL.md / skill-manifest.json / CHANGELOG / 引擎 VERSION）；插件 `yotta-present-plugin` 随本批同版本重建发布。
+
 ## v0.6.6 (2026-09-25)
 
 口径修正：默认呈现规则补明确边界（ClawHub LLM 复核）。

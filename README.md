@@ -18,6 +18,7 @@ long content via <code>--out</code>, or user’s one-liner / bare text.
 <p align="center">Zero external dependencies (Python 3.8+ standard library); Windows + Linux + macOS;
 fully local and offline — no network, no external rendering service.</p>
 
+> 🆕 **v0.7.0**: R3 SVG card demo (open source) — `--channel r3` renders editable cards (conclusion / metrics / table forms + release / weekly / compare / risk scenario templates + brand tokens); all text stays as `<text>` and remains editable, while Markdown keeps the copyable text version.
 > 🆕 **v0.6.6**: explicit boundary for the default rendering rule — it is an opt-in enhancement, not a takeover: when the user asks for plain text or says to skip rendering, output goes out as-is, and project-specific output conventions win. Rendering never rewrites content or decisions, and a failed render falls back to the original text.
 > 🆕 **v0.6.5**: pre-send self-check and block-level exception scope; `fidelity` now separates `requested_form_preserved` from `content_preserved`; `present_result` exposes a compact default MCP schema with advanced options under `options` (legacy top-level arguments remain compatible).
 
@@ -116,14 +117,16 @@ Markdown tables and JSON `rows` are both supported. Explicit `--form` / `--templ
 | `--form <form>` | Force a form (auto-detected by default) |
 | `--template <key>` | Named scenario template: `vuln_report` / `faq` / `status` (takes precedence over `--form`) |
 | `--platform <p>` | Platform adaptation: `webchat` (default) / `discord` / `whatsapp` (tables → lists, headings → bold) / `plain` (strip Markdown symbols) |
-| `--channel <c>` | Render channel (default `auto`, mapped from platform): `r0` colorless baseline (no emoji) / `r1` emoji-enhanced; `r2`/`r3` reserved for later releases |
-| `--theme <t>` | Theme for chart SVG (default `light`): `light` / `dark` (dark background, light text) |
+| `--channel <c>` | Render channel (default `auto`, mapped from platform): `r0` colorless baseline (no emoji) / `r1` emoji-enhanced / `r3` SVG cards (open-source demo); `r2` reserved for a later release |
+| `--card <key>` | R3 card scenario template: `release` / `weekly` / `compare` / `risk` (requires `--channel r3`) |
+| `--brand <path>` | R3 brand token file (JSON: `name` / `primary` / `accent` / `footer` / `logo`; logo: local PNG/JPEG only) |
+| `--theme <t>` | Theme for chart / R3 cards (default `light`): `light` / `dark` (dark background, light text) |
 | `--max-len <n>` | Length cap (chars): compress lists → downgrade headings → truncate, keeping the conclusion |
 | `--md / --text / --both / --json` | Markdown (default) / plain text / both / full JSON |
 | `--out <path>` | Write to file (`--both` writes .md and .txt; a directory is named by form) |
-| `--svg <path>` | Chart form: local SVG output path |
+| `--svg <path>` | Chart form / R3 cards: local SVG output path |
 | `--explain` | Include the form-choice reason |
-| `--list-forms / --list-templates / --version` | List forms / list templates / show version |
+| `--list-forms / --list-templates / --list-cards / --version` | List forms / templates / card templates / show version |
 
 ## Usage
 
@@ -158,6 +161,11 @@ python3 scripts/yotta_present.py --content '<same as above>' --platform plain
 
 # Render channel (default auto: plain -> r0 no-emoji, others -> r1 emoji-enhanced); force colorless baseline
 python3 scripts/yotta_present.py --content '<same as above>' --channel r0
+# R3 cards (open-source demo): three forms + four scenario templates, editable SVG output
+python3 scripts/yotta_present.py --content '{"title": "Release", "grade": "success", "verdict": "Shipped", "metrics": [{"label": "Tests", "value": 233, "unit": "cases"}]}' --channel r3 --form conclusion --card release --svg out/release.svg
+python3 scripts/yotta_present.py --content '{"title": "Weekly report", "metrics": [{"label": "Installs", "value": 186, "unit": "times", "tone": "up"}]}' --channel r3 --card weekly --theme dark
+# Brand tokens: name/primary/accent/footer/logo (logo: local PNG/JPEG only)
+python3 scripts/yotta_present.py --content '<same as above>' --channel r3 --card release --brand references/brand.example.json
 # Theme (dark chart SVG): --theme dark (default light)
 python3 scripts/yotta_present.py --content '{"chart_data": {"chart": "bar", "labels": ["A", "B"], "data": [3, 5]}}' --form chart --theme dark --svg out/bar-dark.svg
 
@@ -170,6 +178,23 @@ python3 scripts/yotta_present.py --content '<same as above>' --max-len 800
 
 Exit codes: **0** = success; **1** = no input / read error; **2** = content validation or render error.
 
+## R3 cards (open-source demo)
+
+`--channel r3` renders an **editable SVG card** for "send-an-image" scenarios (chat groups, newsletters, email headers). Every text stays as `<text>`, so you can edit wording and colors directly in Inkscape / Figma / a browser.
+
+| Scenario template | Form | Use case |
+|---|---|---|
+| `release` | conclusion + metrics | release / acceptance result |
+| `weekly` | metrics | weekly numbers / usage digest |
+| `compare` | table | plan / product comparison |
+| `risk` | conclusion + detail table | security / risk report |
+
+- Three forms `conclusion` / `metrics` / `table`; unsupported forms or missing data fail with a clear error (non-zero exit + fix hint) instead of silently degrading.
+- Brand tokens: `--brand <file>` (`name` / `primary` / `accent` / `footer` / `logo`); empty by default — no watermark. Logo: local PNG/JPEG only (≤ 256 KB; SVG logos are rejected).
+- Editable standard: text-as-`<text>`, semantic layer ids, no scripts / external references / `<foreignObject>`; structure is self-checked after rendering.
+- copyable-first is unchanged: Markdown / plain text still carry the same content alongside the card.
+- Output: `--svg out.svg` writes the file; otherwise the SVG is embedded as a data URI in Markdown; `--json` exposes `card.svg`.
+
 ## MCP usage (present_result)
 
 The skill ships one public MCP server: `yotta-present` (zero dependency, data stays local).
@@ -178,7 +203,7 @@ the 12-chart kernel. The AI **auto-configures this MCP on first use** (writes th
 into `mcpServers` and records the guardrail in permanent memory) — **after obtaining your
 explicit consent** for each persistent change; if you decline, it falls back to the CLI
 with identical output and no functionality is lost. Tools: `present_result` (with
-`form` / `template` / `platform` / `channel` / `theme` / `max_len` / `bold_keys` / `output` / `svg` / `explain`),
+`form` / `template` / `platform` / `channel` / `theme` / `card` / `brand` / `max_len` / `bold_keys` / `output` / `svg` / `explain`),
 `present_forms`, `present_templates`.
 
 ```json

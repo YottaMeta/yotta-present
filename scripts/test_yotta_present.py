@@ -451,7 +451,8 @@ def run_v030():
     r0pl = yp.present({"title": "t", "grade": "success", "verdict": "v"}, platform="plain")
     check("plain result.channel=r0", r0pl.get("channel") == "r0")
     check("r2 未开放报错", _raises(lambda: yp.present({"title": "t"}, channel="r2")))
-    check("r3 未开放报错", _raises(lambda: yp.present({"title": "t"}, channel="r3")))
+    r3ok = yp.present({"title": "t", "verdict": "v"}, channel="r3")
+    check("r3 整卡通道可用（v0.7.0）", r3ok.get("channel") == "r3" and bool(r3ok.get("card", {}).get("svg")))
     check("channel 非法报错", _raises(lambda: yp.present({"title": "t"}, channel="bogus")))
 
     print("== v0.3.0 R1：grade chip 覆盖形态 ==")
@@ -493,6 +494,8 @@ def run_v030():
     check("CLI --channel r0 去 emoji", rcx.returncode == 0 and "🟢" not in rcx.stdout)
     rc2x = _run_cli(["--content", '{"title": "t"}', "--channel", "r2"])
     check("CLI --channel r2 退出 2", rc2x.returncode == 2 and "尚未开放" in rc2x.stderr)
+    rc3x = _run_cli(["--content", '{"title": "t", "verdict": "v"}', "--channel", "r3"])
+    check("CLI --channel r3 出整卡", rc3x.returncode == 0 and "![t](" in rc3x.stdout, rc3x.stderr[:200])
     respc = m.handle_message({"jsonrpc": "2.0", "id": 40, "method": "tools/call",
                               "params": {"name": "present_result",
                                          "arguments": {"content": '{"title": "t", "grade": "success", "verdict": "v"}',
